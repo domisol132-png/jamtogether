@@ -75,13 +75,21 @@ function App() {
   const [rooms, setRooms] = useState([])           
   const [isSearched, setIsSearched] = useState(false)
   const [selectedStudios, setSelectedStudios] = useState([])
-
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [loading, setLoading] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(true) 
   // 🌟 [신규] FAQ 모달 상태
   const [isFaqOpen, setIsFaqOpen] = useState(false)
   
-  const [date, setDate] = useState('2026-02-22')
+  // 🌟 한국 시간(KST) 기준으로 오늘 날짜를 YYYY-MM-DD 형식으로 가져오는 마법의 함수
+  const getTodayKST = () => {
+    const offset = new Date().getTimezoneOffset() * 60000;
+    return new Date(Date.now() - offset).toISOString().split('T')[0];
+  };
+
+  // ❌ 기존: const [date, setDate] = useState('2026-02-22')
+  // ✅ 수정: 이제 접속할 때마다 '오늘 날짜'가 기본으로 뜹니다.
+  const [date, setDate] = useState(getTodayKST());
   const [startTime, setStartTime] = useState(16)
   const [endTime, setEndTime] = useState(22)
   const [minHours, setMinHours] = useState(2)
@@ -108,6 +116,12 @@ function App() {
     }
   };
   useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     // 🚀 뒤에 붙어있던 꼬리표({ headers: ... })를 싹둑 잘라버렸다.
     fetch('https://jam-backend-yk57.onrender.com/all-studios')
       .then(res => res.json())
@@ -253,10 +267,10 @@ function App() {
         )}
       </MapContainer>
 
-      {/* 🌟 우측 상단으로 구출된 FAQ 버튼 */}
+      {/* 🌟 갇혀있던 FAQ 버튼 구출 (z-index: 1000 -> 3000으로 승급!) */}
       <button 
         onClick={() => setIsFaqOpen(true)}
-        className="absolute top-6 right-4 sm:right-6 z-[1000] bg-white text-gray-600 w-11 h-11 rounded-full shadow-lg flex items-center justify-center font-bold text-xl border border-gray-200 hover:bg-gray-50 hover:scale-105 transition-all"
+        className="absolute top-6 right-4 sm:right-6 z-[3000] bg-white text-gray-600 w-11 h-11 rounded-full shadow-lg flex items-center justify-center font-bold text-xl border border-gray-200 hover:bg-gray-50 hover:scale-105 transition-all"
       >
         ?
       </button>
@@ -278,21 +292,41 @@ function App() {
 
       {/* 🌟 FAQ 팝업 (모달) */}
       {isFaqOpen && (
-        <div className="absolute inset-0 z-[3000] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+        <div className="absolute inset-0 z-[4000] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
              <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative">
                 <button onClick={() => setIsFaqOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 text-xl font-bold">✕</button>
                 
                 <h2 className="text-2xl font-extrabold text-gray-900 mb-6">🎸 자주 묻는 질문</h2>
                 
                 <div className="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+                    
+                    {/* 🚀 신규: 앱 설치 유도 섹션 */}
+                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                        <h3 className="font-bold text-blue-600 mb-1">📱 1초 만에 합주실 예약하기 (앱 설치)</h3>
+                        <p className="text-xs text-gray-600 mb-3">매번 검색할 필요 없이 바탕화면에 앱을 깔아두세요!</p>
+                        <button 
+                            onClick={() => {
+                                if (deferredPrompt) {
+                                    deferredPrompt.prompt();
+                                    deferredPrompt.userChoice.then(() => setDeferredPrompt(null));
+                                } else {
+                                    // 아이폰(Safari)은 자동 설치 팝업을 지원하지 않으므로 수동 안내
+                                    alert("🍎 아이폰: 하단 '공유[↑]' 버튼 ➔ '홈 화면에 추가'\n🤖 안드로이드: 우측 상단 '⋮' 메뉴 ➔ '홈 화면에 추가'");
+                                }
+                            }}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-bold shadow transition-colors flex items-center justify-center gap-2"
+                        >
+                            ⬇️ 잼투게더 앱 설치하기
+                        </button>
+                    </div>
+
                     <div className="bg-gray-50 p-4 rounded-xl">
-                        <h3 className="font-bold text-blue-600 mb-1">Q. 잼투게더는 무엇인가요?</h3>
+                        <h3 className="font-bold text-gray-800 mb-1">Q. 잼투게더는 무엇인가요?</h3>
                         <p className="text-sm text-gray-600 leading-relaxed">서울 내 합주실 예약 현황을 실시간으로 스캔하여 원하는 시간에 맞는 빈 방을 찾아주는 서비스입니다.</p>
                     </div>
-                    
-                    {/* 🌟 신규 추가: 문의처 섹션 */}
-                    <div className="bg-gray-50 p-4 rounded-xl border border-blue-100">
-                        <h3 className="font-bold text-blue-600 mb-1">Q. 건의사항 및 문의</h3>
+
+                    <div className="bg-gray-50 p-4 rounded-xl">
+                        <h3 className="font-bold text-gray-800 mb-1">Q. 건의사항 및 문의</h3>
                         <p className="text-sm text-gray-600 leading-relaxed">
                             버그 제보나 추가되었으면 하는 합주실이 있다면 언제든 연락주세요!<br/>
                             📧 <span className="font-extrabold text-gray-900">roomonf2re@gmail.com</span>
