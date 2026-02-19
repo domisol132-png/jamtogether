@@ -85,9 +85,27 @@ function App() {
   const [endTime, setEndTime] = useState(22)
   const [minHours, setMinHours] = useState(2)
   const [mapCenter, setMapCenter] = useState([37.556, 126.924])
-  const [expandedRegions, setExpandedRegions] = useState(["🔥 홍대입구역 (메인 스트릿)"])
+  const [expandedRegions, setExpandedRegions] = useState(["홍대입구역 근처"])
   const [searchError, setSearchError] = useState("")
+  const [sheetHeight, setSheetHeight] = useState(35);
 
+  // 🌟 [추가] 물리 엔진: 손가락/마우스의 Y좌표를 계산해서 높이를 조절하는 함수
+  const handleDrag = (e) => {
+    // PC에서 마우스 클릭을 떼면 작동하지 않게 방어
+    if (e.type === 'mousemove' && e.buttons !== 1) return;
+
+    // 터치(모바일)와 마우스(PC)의 Y좌표를 모두 가져옴
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const windowHeight = window.innerHeight;
+    
+    // 전체 화면 대비 손가락 위치를 % (vh)로 계산
+    const newHeight = ((windowHeight - clientY) / windowHeight) * 100;
+
+    // 시트가 너무 작아지거나(15vh) 화면을 다 덮지 않게(85vh) 제한
+    if (newHeight >= 15 && newHeight <= 85) {
+      setSheetHeight(newHeight);
+    }
+  };
   useEffect(() => {
     fetch('https://light-cheetahs-rule.loca.lt/all-studios', {
       headers: {
@@ -186,7 +204,8 @@ function App() {
       setRooms(data.results)
       setIsSearched(true)
       setIsSearchOpen(false) 
-      
+      setSheetHeight(35) // 🌟 [추가] 새 검색 시 바텀 시트 높이를 다시 기본 35vh로 리셋
+
       if (data.results.length > 0 && data.results[0].lat) {
         setMapCenter([data.results[0].lat, data.results[0].lon])
       }
@@ -368,28 +387,43 @@ function App() {
         </div>
       )}
 
-      {/* 결과 리스트 */}
+      {/* 🌟 결과 리스트 (드래그 가능한 바텀 시트) */}
       {isSearched && rooms.length > 0 && !isSearchOpen && (
-        <div className="absolute bottom-0 left-0 w-full z-[1000] bg-white rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.1)] max-h-[35vh] overflow-y-auto p-5 animate-slide-up">
-            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4"></div>
-            <h3 className="font-bold text-gray-800 mb-3 text-lg">🎉 검색 결과 <span className="text-blue-600">{rooms.length}</span>개</h3>
-            <div className="space-y-3">
+        <div 
+          className="absolute bottom-0 left-0 w-full z-[1000] bg-white rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.1)] flex flex-col"
+          style={{ height: `${sheetHeight}vh`, transition: 'height 0.05s ease-out' }} 
+        >
+            {/* 🚀 드래그 핸들 (여기를 잡고 끈다) */}
+            <div 
+              className="w-full pt-4 pb-3 cursor-grab active:cursor-grabbing touch-none flex justify-center shrink-0 bg-transparent"
+              onTouchMove={handleDrag}
+              onMouseMove={handleDrag}
+            >
+                <div className="w-12 h-1.5 bg-gray-300 rounded-full hover:bg-gray-400 transition-colors"></div>
+            </div>
+            
+            {/* 결과 개수 헤더 */}
+            <div className="px-5 pb-2 shrink-0 border-b border-gray-100">
+                <h3 className="font-bold text-gray-800 text-lg">🎉 검색 결과 <span className="text-blue-600">{rooms.length}</span>개</h3>
+            </div>
+
+            {/* 방 목록 (여기는 스크롤만 됨) */}
+            <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3 custom-scrollbar">
                 {rooms.map((room, index) => (
                     <div key={index} className="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
                         <div>
                             <div className="flex items-center gap-2">
                                 <h4 className="font-bold text-gray-900">{room.합주실}</h4>
-                                {/* 🌟 텍스트 복사 버튼 (A안 기능 살짝 추가) */}
                                 <button 
                                     onClick={() => copyToClipboard(`🎸 [잼투게더] ${date} ${room.합주실} 예약 가능!\n⏰ 시간: ${room.예약가능시간}\n🔗 예약하기: ${room.예약링크}`)}
-                                    className="text-gray-400 hover:text-blue-600 text-xs border border-gray-200 px-1.5 py-0.5 rounded" title="공유 텍스트 복사"
+                                    className="text-gray-400 hover:text-blue-600 text-xs border border-gray-200 px-1.5 py-0.5 rounded transition-colors" title="공유 텍스트 복사"
                                 >
                                     📋
                                 </button>
                             </div>
                             <p className="text-sm text-blue-600 font-bold mt-1">⏰ {room.예약가능시간}</p>
                         </div>
-                        <a href={room.예약링크} target="_blank" className="bg-green-500 text-white px-4 py-2.5 rounded-lg font-bold text-sm shadow hover:bg-green-600 active:scale-95 transition-all">예약</a>
+                        <a href={room.예약링크} target="_blank" rel="noreferrer" className="bg-green-500 text-white px-4 py-2.5 rounded-lg font-bold text-sm shadow hover:bg-green-600 active:scale-95 transition-all">예약</a>
                     </div>
                 ))}
             </div>
