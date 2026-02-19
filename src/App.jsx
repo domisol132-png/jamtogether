@@ -378,17 +378,17 @@ function App() {
         </div>
       )}
 
-      {/* 🌟 결과 리스트 (드래그 가능한 바텀 시트) */}
+      {/* 🌟 수정: PC(화면 넓음)일 때는 높이 자동, 모바일일 때만 드래그 높이 적용 */}
       {isSearched && rooms.length > 0 && !isSearchOpen && (
         <div 
-          className="absolute bottom-0 left-0 w-full z-[1000] bg-white rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.1)] flex flex-col"
-          style={{ height: `${sheetHeight}vh`, transition: 'height 0.05s ease-out' }} 
+          className="absolute bottom-0 left-0 w-full z-[1000] bg-white rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.1)] flex flex-col sm:max-h-[50vh]"
+          style={window.innerWidth > 640 ? {} : { height: `${sheetHeight}vh`, transition: 'height 0.05s ease-out' }} 
         >
-            {/* 🚀 드래그 핸들 (여기를 잡고 끈다) */}
+            {/* 🚀 드래그 핸들: PC에서는 아예 숨기고(sm:hidden), 마우스 이벤트(onMouseMove)는 삭제! */}
             <div 
-              className="w-full pt-4 pb-3 cursor-grab active:cursor-grabbing touch-none flex justify-center shrink-0 bg-transparent"
+              className="w-full pt-4 pb-3 cursor-grab active:cursor-grabbing touch-none flex justify-center shrink-0 bg-transparent sm:hidden"
               onTouchMove={handleDrag}
-              onMouseMove={handleDrag}
+              // ❌ onMouseMove={handleDrag} <-- 이 줄을 아예 지워버려라!
             >
                 <div className="w-12 h-1.5 bg-gray-300 rounded-full hover:bg-gray-400 transition-colors"></div>
             </div>
@@ -398,23 +398,29 @@ function App() {
                 <h3 className="font-bold text-gray-800 text-lg">🎉 검색 결과 <span className="text-blue-600">{rooms.length}</span>개</h3>
             </div>
 
-            {/* 방 목록 (여기는 스크롤만 됨) */}
+            {/* 방 목록 */}
             <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3 custom-scrollbar">
                 {rooms.map((room, index) => (
                     <div key={index} className="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h4 className="font-bold text-gray-900">{room.합주실}</h4>
+                        
+                        {/* 🌟 텍스트 영역이 왼쪽 공간만 차지하도록 방어 (flex-1 min-w-0 mr-3) */}
+                        <div className="flex-1 min-w-0 mr-3">
+                            <div className="flex items-center gap-2 mb-1">
+                                {/* 🌟 truncate를 넣어서 이름이 길면 '...'으로 잘리게 만듦 */}
+                                <h4 className="font-bold text-gray-900 truncate text-base">{room.합주실}</h4>
                                 <button 
                                     onClick={() => copyToClipboard(`🎸 [잼투게더] ${date} ${room.합주실} 예약 가능!\n⏰ 시간: ${room.예약가능시간}\n🔗 예약하기: ${room.예약링크}`)}
-                                    className="text-gray-400 hover:text-blue-600 text-xs border border-gray-200 px-1.5 py-0.5 rounded transition-colors" title="공유 텍스트 복사"
+                                    className="text-gray-400 hover:text-blue-600 text-xs border border-gray-200 px-1.5 py-0.5 rounded transition-colors shrink-0" 
+                                    title="공유 텍스트 복사"
                                 >
                                     📋
                                 </button>
                             </div>
-                            <p className="text-sm text-blue-600 font-bold mt-1">⏰ {room.예약가능시간}</p>
+                            <p className="text-sm text-blue-600 font-bold">⏰ {room.예약가능시간}</p>
                         </div>
-                        <a href={room.예약링크} target="_blank" rel="noreferrer" className="bg-green-500 text-white px-4 py-2.5 rounded-lg font-bold text-sm shadow hover:bg-green-600 active:scale-95 transition-all">예약</a>
+                        
+                        {/* 🌟 예약 버튼 절대 안 찌그러지게 고정 (shrink-0) */}
+                        <a href={room.예약링크} target="_blank" rel="noreferrer" className="bg-green-500 text-white px-4 py-2.5 rounded-lg font-bold text-sm shadow hover:bg-green-600 active:scale-95 transition-all shrink-0">예약</a>
                     </div>
                 ))}
             </div>
