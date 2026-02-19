@@ -159,12 +159,19 @@ function App() {
     setLoading(true)
     
     try {
-      const queryParams = new URLSearchParams({ // ... })
+      // 🚨 대참사의 원인이었던 파라미터 부분을 정상 복구했다.
+      const queryParams = new URLSearchParams({
+        date: date,
+        start_time: startTime,
+        end_time: endTime,
+        min_hours: minHours
+      })
+      
       selectedStudios.forEach(s => queryParams.append('studios', s))
 
       const response = await fetch(`https://light-cheetahs-rule.loca.lt/search?${queryParams.toString()}`, {
         headers: {
-          "Bypass-Tunnel-Reminder": "true", // 🚀 여기도 우회 암호 추가!
+          "Bypass-Tunnel-Reminder": "true", // 🚀 로컬터널 우회 암호
           "User-Agent": "JamTogether/1.0"
         }
       })
