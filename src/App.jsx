@@ -48,21 +48,22 @@ const REGION_MAPPING = {
     "신촌/이대 ": ["그라운드합주실 신촌1호점"]
 }
 
-// 시간 입력 컴포넌트
+// 🌟 [수정] 모바일 화면에서 튀어나가지 않는 반응형 TimeInput 컴포넌트
 const TimeInput = ({ label, value, setValue, suffix, min = 0, max = 24 }) => {
     const handleDecrement = () => { if (value > min) setValue(Number(value) - 1) }
     const handleIncrement = () => { if (value < max) setValue(Number(value) + 1) }
 
     return (
-        <div className="flex-1">
-            <label className="text-xs font-bold text-gray-500 mb-1 block">{label}</label>
-            <div className="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden h-12">
-                <button onClick={handleDecrement} className="w-10 h-full bg-gray-50 text-gray-500 hover:bg-gray-200 active:bg-gray-300 font-bold text-lg transition-colors border-r border-gray-100">−</button>
-                <div className="flex-1 flex items-center justify-center gap-1">
-                    <input type="number" value={value} onChange={(e) => setValue(Number(e.target.value))} className="w-8 text-center font-bold text-lg outline-none"/>
-                    <span className="text-xs text-gray-400 whitespace-nowrap">{suffix}</span>
+        <div className="flex-1 min-w-0"> {/* min-w-0 추가: 박스 탈출 방지 */}
+            <label className="text-xs font-bold text-gray-500 mb-1 block truncate">{label}</label>
+            <div className="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden h-11"> {/* h-12 -> h-11로 살짝 다이어트 */}
+                {/* w-10 -> w-8 로 줄여서 모바일 공간 확보 */}
+                <button onClick={handleDecrement} className="w-8 sm:w-10 h-full bg-gray-50 text-gray-500 hover:bg-gray-200 active:bg-gray-300 font-bold text-lg transition-colors border-r border-gray-100">−</button>
+                <div className="flex-1 flex items-center justify-center gap-0.5 sm:gap-1 min-w-0 px-1">
+                    <input type="number" value={value} onChange={(e) => setValue(Number(e.target.value))} className="w-6 sm:w-8 text-center font-bold text-base sm:text-lg outline-none bg-transparent"/>
+                    <span className="text-[10px] sm:text-xs text-gray-400 whitespace-nowrap truncate">{suffix}</span>
                 </div>
-                <button onClick={handleIncrement} className="w-10 h-full bg-gray-50 text-gray-500 hover:bg-gray-200 active:bg-gray-300 font-bold text-lg transition-colors border-l border-gray-100">+</button>
+                <button onClick={handleIncrement} className="w-8 sm:w-10 h-full bg-gray-50 text-gray-500 hover:bg-gray-200 active:bg-gray-300 font-bold text-lg transition-colors border-l border-gray-100">+</button>
             </div>
         </div>
     )
@@ -88,7 +89,7 @@ function App() {
   const [searchError, setSearchError] = useState("")
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/all-studios')
+    fetch('https://dry-lamps-look.loca.lt/all-studios')
       .then(res => res.json())
       .then(data => {
         setAllStudios(data.studios)
@@ -157,7 +158,7 @@ function App() {
       })
       selectedStudios.forEach(s => queryParams.append('studios', s))
 
-      const response = await fetch(`http://127.0.0.1:8000/search?${queryParams.toString()}`)
+      const response = await fetch(`https://dry-lamps-look.loca.lt/search?${queryParams.toString()}`)
       const data = await response.json()
       
       if (data.results.length === 0) {
