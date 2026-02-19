@@ -89,11 +89,17 @@ function App() {
   const [searchError, setSearchError] = useState("")
 
   useEffect(() => {
-    fetch('https://dry-lamps-look.loca.lt/all-studios')
+    // 🌟 주의: 주소는 네가 localtunnel로 받은 진짜 주소로 넣어야 한다!
+    fetch('https://dry-lamps-look.loca.lt/all-studios', {
+      headers: {
+        "Bypass-Tunnel-Reminder": "true", // 🚀 보안 경고창 우회 암호
+      }
+    })
       .then(res => res.json())
       .then(data => {
         setAllStudios(data.studios)
-        const allNames = data.studios.map(s => s.group)
+        // 🌟 백엔드 데이터에 의존하지 않고, 우리 프론트엔드 REGION_MAPPING에서 이름 추출!
+        const allNames = Object.values(REGION_MAPPING).flat(); 
         setSelectedStudios(allNames)
       })
       .catch(err => console.error("로딩 실패:", err))
@@ -158,7 +164,12 @@ function App() {
       })
       selectedStudios.forEach(s => queryParams.append('studios', s))
 
-      const response = await fetch(`https://dry-lamps-look.loca.lt/search?${queryParams.toString()}`)
+      // 🌟 여기에 우회 암호 헤더 추가!
+      const response = await fetch(`https://dry-lamps-look.loca.lt/search?${queryParams.toString()}`, {
+        headers: {
+          "Bypass-Tunnel-Reminder": "true" // 🚀 보안 경고창 우회 암호
+        }
+      })
       const data = await response.json()
       
       if (data.results.length === 0) {
@@ -300,9 +311,15 @@ function App() {
                     <div className="flex justify-between items-center mb-3">
                         <h3 className="text-sm font-bold text-gray-800">🎯 지역별 합주실 선택</h3>
                         <button onClick={() => {
-                            if (selectedStudios.length > 0) setSelectedStudios([]);
-                            else setSelectedStudios(allStudios.map(s => s.group));
-                        }} className="text-xs text-gray-400 underline hover:text-blue-600">모두 해제 / 선택</button>
+                            // 🌟 수정된 로직: 무조건 프론트엔드의 REGION_MAPPING 기반으로 작동!
+                            if (selectedStudios.length > 0) {
+                                setSelectedStudios([]); // 하나라도 선택되어 있으면 모두 해제
+                            } else {
+                                setSelectedStudios(Object.values(REGION_MAPPING).flat()); // 다 비어있으면 싹 다 선택
+                            }
+                        }} className="text-xs text-gray-400 underline hover:text-blue-600">
+                            모두 해제 / 선택
+                        </button>
                     </div>
                     
                     {Object.entries(REGION_MAPPING).map(([region, studios]) => (
