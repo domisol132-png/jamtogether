@@ -1,0 +1,21 @@
+{
+  "name": "잼투게더",
+  "short_name": "JamTogether",
+  "description": "합주실 빈 방을 1초 만에 찾아보세요.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/pick-marker.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/pick-marker.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* 🌑 회색 마커 필터 (채도 0으로 만듦) */
+.gray-filter {
+  filter: grayscale(100%) opacity(0.7);
+}
+/* 숫자 입력창 화살표 제거 (크롬, 사파리, 엣지) */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* 숫자 입력창 화살표 제거 (파이어폭스) */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+/* src/index.css 맨 아래 추가/교체 */
+
+/* src/index.css */
+
+/* 🔴 파란색 핀을 빨간색으로 변신시키는 필터 */
+.red-filter {
+  filter: hue-rotate(140deg) saturate(1.5) brightness(0.9);
+}
+
+/* 🌑 파란색 핀을 회색으로 죽이는 필터 */
+.gray-filter {
+  filter: grayscale(100%) opacity(0.7);
+}
+/* 1. 프리텐다드 폰트 불러오기 (CDN) */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+
+/* 2. 전체 적용 */
+body {
+  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+}
+/* 🚀 팝업 애니메이션: 밑에서 위로 부드럽게 올라오기 */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translate(0, 50px); /* 50px 아래에서 시작 */
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0); /* 제자리로 */
+  }
+}
+
+/* 애니메이션 클래스 */
+.animate-slide-up {
+  animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1); /* 애플 스타일의 쫀득한 움직임 */
+}
