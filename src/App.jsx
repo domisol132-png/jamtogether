@@ -107,16 +107,11 @@ function App() {
     }
   };
   useEffect(() => {
-    fetch('https://light-cheetahs-rule.loca.lt/all-studios', {
-      headers: {
-        "Bypass-Tunnel-Reminder": "true", // 🚀 로컬터널 보안 안내창 우회!
-        "User-Agent": "JamTogether/1.0"
-      }
-    })
+    // 🚀 뒤에 붙어있던 꼬리표({ headers: ... })를 싹둑 잘라버렸다.
+    fetch('https://jam-backend-yk57.onrender.com/all-studios')
       .then(res => res.json())
       .then(data => {
         setAllStudios(data.studios)
-        // 🌟 백엔드 데이터에 의존하지 않고, 우리 프론트엔드 REGION_MAPPING에서 이름 추출!
         const allNames = Object.values(REGION_MAPPING).flat(); 
         setSelectedStudios(allNames)
       })
@@ -187,12 +182,7 @@ function App() {
       
       selectedStudios.forEach(s => queryParams.append('studios', s))
 
-      const response = await fetch(`https://light-cheetahs-rule.loca.lt/search?${queryParams.toString()}`, {
-        headers: {
-          "Bypass-Tunnel-Reminder": "true", // 🚀 로컬터널 우회 암호
-          "User-Agent": "JamTogether/1.0"
-        }
-      })
+      const response = await fetch(`https://jam-backend-yk57.onrender.com/search?${queryParams.toString()}`)
       const data = await response.json()
       
       if (data.results.length === 0) {
