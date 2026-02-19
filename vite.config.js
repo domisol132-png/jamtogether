@@ -7,27 +7,26 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['vite.svg'], // 🌟 기본 아이콘 사용
       manifest: {
-        name: '잼투게더',
-        short_name: 'JamTogether',
-        description: '합주실 빈 방을 1초 만에 찾아보세요.',
+        name: 'JamTogether',
+        short_name: '잼투게더',
+        description: '1초만에 합주실 예약하기',
         theme_color: '#ffffff',
         background_color: '#ffffff',
-        display: 'standalone',
+        display: 'standalone', // 🌟 브라우저 주소창을 없애고 진짜 앱처럼 보이게 함
         icons: [
           {
-            src: 'vite.svg', // 🌟 피크 대신 기본 아이콘 연결
+            src: 'icon.png', // 🚨 중요: public 폴더에 이 이름의 이미지가 있어야 함!
             sizes: '192x192',
-            type: 'image/svg+xml'
+            type: 'image/png'
           },
           {
-            src: 'vite.svg',
+            src: 'icon.png',
             sizes: '512x512',
-            type: 'image/svg+xml'
+            type: 'image/png'
           }
         ]
       }
     })
-  ],
+  ]
 })
