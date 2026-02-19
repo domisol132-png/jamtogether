@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { Analytics } from "@vercel/analytics/react"
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import toast, { Toaster } from 'react-hot-toast';
@@ -216,7 +217,7 @@ function App() {
     <div className="relative w-full h-screen overflow-hidden font-sans bg-gray-100">
       {/* 🌟 [필수] 토스트 기계 설치 (return 문 안쪽, 맨 위에 두면 됨) */}
       <Toaster />
-      
+      <Analytics /> {/* 🚀 이 한 줄이 방문자 데이터를 수집한다! */}
       <MapContainer center={mapCenter} zoom={15} style={{ height: "100%", width: "100%", zIndex: 0 }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
         <ChangeView center={mapCenter} zoom={15} />
