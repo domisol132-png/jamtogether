@@ -253,10 +253,10 @@ function App() {
         )}
       </MapContainer>
 
-      {/* 🌟 좌측 하단 FAQ 버튼 (두쫀쿠맵 스타일) */}
+      {/* 🌟 우측 상단으로 구출된 FAQ 버튼 */}
       <button 
         onClick={() => setIsFaqOpen(true)}
-        className="absolute bottom-6 left-4 z-[1000] bg-white text-gray-600 w-12 h-12 rounded-full shadow-lg flex items-center justify-center font-bold text-xl border border-gray-200 hover:bg-gray-50 hover:scale-105 transition-all"
+        className="absolute top-6 right-4 sm:right-6 z-[1000] bg-white text-gray-600 w-11 h-11 rounded-full shadow-lg flex items-center justify-center font-bold text-xl border border-gray-200 hover:bg-gray-50 hover:scale-105 transition-all"
       >
         ?
       </button>
@@ -287,7 +287,16 @@ function App() {
                 <div className="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
                     <div className="bg-gray-50 p-4 rounded-xl">
                         <h3 className="font-bold text-blue-600 mb-1">Q. 잼투게더는 무엇인가요?</h3>
-                        <p className="text-sm text-gray-600 leading-relaxed">합주실 예약 현황을 실시간으로 스캔해서, 원하는 시간에 딱 맞는 빈 방을 찾아주는 서비스입니다.</p>
+                        <p className="text-sm text-gray-600 leading-relaxed">서울 내 합주실 예약 현황을 실시간으로 스캔하여 원하는 시간에 맞는 빈 방을 찾아주는 서비스입니다.</p>
+                    </div>
+                    
+                    {/* 🌟 신규 추가: 문의처 섹션 */}
+                    <div className="bg-gray-50 p-4 rounded-xl border border-blue-100">
+                        <h3 className="font-bold text-blue-600 mb-1">Q. 건의사항 및 문의</h3>
+                        <p className="text-sm text-gray-600 leading-relaxed">
+                            버그 제보나 추가되었으면 하는 합주실이 있다면 언제든 연락주세요!<br/>
+                            📧 <span className="font-extrabold text-gray-900">roomonf2re@gmail.com</span>
+                        </p>
                     </div>
                 </div>
 
