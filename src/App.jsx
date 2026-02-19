@@ -78,6 +78,7 @@ function App() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [loading, setLoading] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(true) 
+  
   // 🌟 [신규] FAQ 모달 상태
   const [isFaqOpen, setIsFaqOpen] = useState(false)
   
@@ -98,6 +99,18 @@ function App() {
   const [searchError, setSearchError] = useState("")
   const [sheetHeight, setSheetHeight] = useState(35);
 
+
+  // 🌟 [추가] 록스타 로딩 문구 리스트 & 현재 인덱스
+  const loadingPhrases = [
+    "탐색 중...",
+    "🎸 앰프 진공관 예열하는 중...",
+    "🥁 스네어 드럼 튜닝 중...",
+    "🎤 마이크 테스트! 아, 아!",
+    "🔌 이펙터 페달 연결하는 중...",
+    "🎧 춤을 추며 절망이랑 싸울 거야..."
+  ];
+  const [loadingIndex, setLoadingIndex] = useState(0);
+
   // 🌟 [추가] 물리 엔진: 손가락/마우스의 Y좌표를 계산해서 높이를 조절하는 함수
   const handleDrag = (e) => {
     // PC에서 마우스 클릭을 떼면 작동하지 않게 방어
@@ -115,14 +128,21 @@ function App() {
       setSheetHeight(newHeight);
     }
   };
+  // 🌟 1번 엔진: PWA 설치 팝업 가로채기
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    // 이 엔진의 종료(청소) 버튼은 맨 마지막에 있어야 합니다.
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    // 🚀 뒤에 붙어있던 꼬리표({ headers: ... })를 싹둑 잘라버렸다.
+  }, []); // 👈 첫 번째 방 닫힘
+
+
+  // 🌟 2번 엔진: 백엔드 서버와 통신하기 (이제 회색 불이 켜질 겁니다!)
+  useEffect(() => {
     fetch('https://jam-backend-yk57.onrender.com/all-studios')
       .then(res => res.json())
       .then(data => {
@@ -131,7 +151,19 @@ function App() {
         setSelectedStudios(allNames)
       })
       .catch(err => console.error("로딩 실패:", err))
-  }, [])
+  }, []); // 👈 두 번째 방 닫힘
+
+  useEffect(() => {
+    let interval;
+    if (loading) {
+      interval = setInterval(() => {
+        setLoadingIndex((prev) => (prev + 1) % loadingPhrases.length);
+      }, 1200); // 1.2초(1200ms)마다 변경
+    } else {
+      setLoadingIndex(0); // 로딩이 끝나면 다시 처음으로 리셋
+    }
+    return () => clearInterval(interval); // 컴포넌트가 꺼지면 타이머도 청소
+  }, [loading]);
 
   const toggleStudio = (name) => {
     if (selectedStudios.includes(name)) {
@@ -354,7 +386,7 @@ function App() {
                 {/* 날짜/시간 섹션 */}
                 <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
                     <label className="text-xs font-bold text-gray-500 mb-2 block">📅 날짜 선택</label>
-                    <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full p-3.5 bg-white border border-gray-200 rounded-xl mb-4 outline-none focus:border-blue-500 text-lg font-bold text-gray-800"/>
+                    <input type="date" value={date} min={getTodayKST()} onChange={e => setDate(e.target.value)} className="w-full p-3.5 bg-white border border-gray-200 rounded-xl mb-4 outline-none focus:border-blue-500 text-lg font-bold text-gray-800"/>
                     <div className="flex gap-3">
                         <TimeInput label="시작 시간" value={startTime} setValue={setStartTime} suffix="시 부터" />
                         <TimeInput label="종료 시간" value={endTime} setValue={setEndTime} suffix="시 까지" />
@@ -413,8 +445,14 @@ function App() {
 
             <div className="p-6 pt-4 border-t border-gray-100 bg-white rounded-b-3xl shrink-0">
                 {searchError && <div className="mb-3 text-center bg-red-50 text-red-600 text-sm font-bold p-3 rounded-xl animate-pulse">{searchError}</div>}
+                
                 <button onClick={handleSearch} className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl text-lg shadow-lg hover:shadow-xl transition-all active:scale-95 flex justify-center items-center gap-2">
-                    {loading ? <><span>탐색 중...</span><span className="animate-spin">⏳</span></> : <><span>조건에 맞는 방 찾기</span><span>🚀</span></>}
+                    {/* 🌟 수정: 밋밋한 텍스트 대신 살아 숨쉬는 록스타 로딩 문구 이식! */}
+                    {loading ? (
+                        <><span>{loadingPhrases[loadingIndex]}</span><span className="animate-spin">⏳</span></>
+                    ) : (
+                        <><span>조건에 맞는 방 찾기</span><span>🚀</span></>
+                    )}
                 </button>
             </div>
           </div>
