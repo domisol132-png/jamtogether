@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import { Analytics } from "@vercel/analytics/react"
 import L from 'leaflet'
@@ -78,7 +79,8 @@ function App() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [loading, setLoading] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(true) 
-  
+  const sheetRef = useRef(null);
+
   // 🌟 [신규] FAQ 모달 상태
   const [isFaqOpen, setIsFaqOpen] = useState(false)
   
@@ -120,13 +122,24 @@ function App() {
     // 터치(모바일)와 마우스(PC)의 Y좌표를 모두 가져옴
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     const windowHeight = window.innerHeight;
-    
     // 전체 화면 대비 손가락 위치를 % (vh)로 계산
     const newHeight = ((windowHeight - clientY) / windowHeight) * 100;
-
     // 시트가 너무 작아지거나(15vh) 화면을 다 덮지 않게(85vh) 제한
     if (newHeight >= 15 && newHeight <= 85) {
-      setSheetHeight(newHeight);
+      // 🚀 핵심: setSheetHeight를 쓰지 않고 HTML 요소에 직접 값을 꽂아버림 (렌더링 부하 제로)
+      if (sheetRef.current) {
+        sheetRef.current.style.height = `${newHeight}vh`;
+      }
+    }
+  };
+  // 🌟 [신규] 손가락을 뗐을 때만 딱 한 번 리액트 상태를 업데이트해서 동기화
+  const handleDragEnd = (e) => {
+    const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+    const windowHeight = window.innerHeight;
+    const newHeight = ((windowHeight - clientY) / windowHeight) * 100;
+    
+    if (newHeight >= 15 && newHeight <= 85) {
+      setSheetHeight(newHeight); // 손 뗄 때만 최종 위치 저장
     }
   };
   // 🌟 1번 엔진: PWA 설치 팝업 가로채기
@@ -460,24 +473,20 @@ function App() {
         </div>
       )}
 
-      {/* 🌟 수정: 손가락 동기화 최적화 (0.05s -> 0.02s 극한의 타협) */}
+      {/* 🌟 수정: ref={sheetRef} 추가 및 transition 완전 제거 */}
       {isSearched && rooms.length > 0 && !isSearchOpen && (
         <div 
+          ref={sheetRef} 
           className="absolute bottom-0 left-0 w-full z-[1000] bg-white rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.1)] flex flex-col sm:max-h-[50vh] will-change-[height]"
-          style={
-            window.innerWidth > 640 
-              ? {} 
-              // 🚀 창업자의 지시에 따라 딜레이를 0.02초로 단축. 빠르면서도 부드럽다.
-              : { height: `${sheetHeight}vh`, transition: 'height 0.02s linear' } 
-          } 
+          style={window.innerWidth > 640 ? {} : { height: `${sheetHeight}vh` }} 
         >
-            {/* 🚀 드래그 핸들: PC에서는 아예 숨기고(sm:hidden), 마우스 이벤트(onMouseMove)는 삭제! */}
+            {/* 🌟 수정: onTouchEnd={handleDragEnd} 추가 */}
             <div 
               className="w-full pt-4 pb-3 cursor-grab active:cursor-grabbing touch-none flex justify-center shrink-0 bg-transparent sm:hidden"
               onTouchMove={handleDrag}
-              // ❌ onMouseMove={handleDrag} <-- 이 줄을 아예 지워버려라!
+              onTouchEnd={handleDragEnd}
             >
-                <div className="w-12 h-1.5 bg-gray-300 rounded-full hover:bg-gray-400 transition-colors"></div>
+                <div className="w-12 h-1.5 bg-gray-300 rounded-full hover:bg-gray-400"></div>
             </div>
             
             {/* 결과 개수 헤더 */}
