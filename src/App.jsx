@@ -261,7 +261,7 @@ function App() {
   }
 
   return (
-    <div className="relative w-full h-screen overflow-hidden font-sans bg-gray-100">
+    <div className="relative w-full h-[100dvh] overflow-hidden font-sans bg-gray-100 overscroll-none touch-pan-x touch-pan-y">
       {/* 🌟 [필수] 토스트 기계 설치 (return 문 안쪽, 맨 위에 두면 됨) */}
       <Toaster />
       <Analytics /> {/* 🚀 이 한 줄이 방문자 데이터를 수집한다! */}
@@ -460,11 +460,16 @@ function App() {
         </div>
       )}
 
-      {/* 🌟 수정: PC(화면 넓음)일 때는 높이 자동, 모바일일 때만 드래그 높이 적용 */}
+      {/* 🌟 수정: 손가락 동기화 최적화 (0.05s -> 0.02s 극한의 타협) */}
       {isSearched && rooms.length > 0 && !isSearchOpen && (
         <div 
-          className="absolute bottom-0 left-0 w-full z-[1000] bg-white rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.1)] flex flex-col sm:max-h-[50vh]"
-          style={window.innerWidth > 640 ? {} : { height: `${sheetHeight}vh`, transition: 'height 0.05s ease-out' }} 
+          className="absolute bottom-0 left-0 w-full z-[1000] bg-white rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.1)] flex flex-col sm:max-h-[50vh] will-change-[height]"
+          style={
+            window.innerWidth > 640 
+              ? {} 
+              // 🚀 창업자의 지시에 따라 딜레이를 0.02초로 단축. 빠르면서도 부드럽다.
+              : { height: `${sheetHeight}vh`, transition: 'height 0.02s linear' } 
+          } 
         >
             {/* 🚀 드래그 핸들: PC에서는 아예 숨기고(sm:hidden), 마우스 이벤트(onMouseMove)는 삭제! */}
             <div 
