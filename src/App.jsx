@@ -133,6 +133,13 @@ function App() {
       })
       .catch(err => console.error("로딩 실패:", err))
   }, []); // 👈 두 번째 방 닫힘
+  // 🌟 카카오톡 공유 SDK 초기화 (앱 켜질 때 1번만)
+  useEffect(() => {
+    // 대문자 Kakao를 쓴다 (지도는 소문자 kakao)
+    if (window.Kakao && !window.Kakao.isInitialized()) {
+      window.Kakao.init("d627f6cea680314e7ba4743e4d1bff78"); // 네 카카오 자바스크립트 키
+    }
+  }, []);
   
   useEffect(() => {
     let interval;
@@ -175,22 +182,35 @@ function App() {
     }
   }
 
- // 🌟 [수정] 텍스트 복사 함수 (alert 삭제 -> toast 적용)
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).then(() => {
-      toast.success("📋 텍스트 복사 완료! 합주실을 공유하세요.", {
-        duration: 3000,
-        position: 'bottom-center',
-        style: {
-          background: '#333',
-          color: '#fff',
-          fontWeight: 'bold',
-          borderRadius: '20px',
+ // 🚀 [신규] 카카오톡 바이럴 카드 발사 함수
+  const shareKakao = (room) => {
+    if (window.Kakao) {
+      window.Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+          title: `🎸 [잼투게더] 합주실 스캔 완료!`,
+          description: `📍 합주실: ${room.합주실}\n📅 날짜: ${date}\n⏰ 시간: ${room.예약가능시간}\n\n지금 바로 예약하세요.`,
+          // 우리가 OG 태그에 썼던 메인 이미지를 영수증 배경으로 재활용한다
+          imageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200&auto=format&fit=crop',
+          link: {
+            mobileWebUrl: room.예약링크,
+            webUrl: room.예약링크,
+          },
         },
-      }) // ✅ 이게 바로 섹시한 토스트다.
-    })
-  }
-
+        buttons: [
+          {
+            title: '네이버로 예약하기',
+            link: {
+              mobileWebUrl: room.예약링크,
+              webUrl: room.예약링크,
+            },
+          },
+        ],
+      });
+    } else {
+      toast.error("카카오톡 공유 엔진을 불러오지 못했습니다.");
+    }
+  };
   const handleSearch = async () => {
     if (selectedStudios.length === 0) {
         setSearchError("⚠️ 최소 1개 이상의 합주실을 선택해주세요!")
@@ -540,13 +560,16 @@ function App() {
                             <div className="flex items-center gap-2 mb-1">
                                 {/* 🌟 truncate를 넣어서 이름이 길면 '...'으로 잘리게 만듦 */}
                                 <h4 className="font-bold text-gray-900 truncate text-base">{room.합주실}</h4>
+                                {/* 🚀 [수정] 건조한 클립보드 복사 버튼을 버리고, 시선을 사로잡는 카카오 노란색 버튼 이식 */}
                                 <button 
-                                    onClick={() => copyToClipboard(`🎸 [잼투게더] ${date} ${room.합주실} 예약 가능!\n⏰ 시간: ${room.예약가능시간}\n🔗 예약하기: ${room.예약링크}`)}
-                                    className="text-gray-400 hover:text-blue-600 text-xs border border-gray-200 px-1.5 py-0.5 rounded transition-colors shrink-0" 
-                                    title="공유 텍스트 복사"
+                                    onClick={() => shareKakao(room)}
+                                    className="flex items-center gap-1.5 bg-[#FEE500] text-[#3E2723] hover:bg-[#FDD835] text-[11px] font-extrabold px-2.5 py-1.5 rounded-lg transition-colors shrink-0 shadow-sm" 
+                                    title="카톡으로 공유하기"
                                 >
-                                    📋
+                                    <svg viewBox="0 0 32 32" className="w-3.5 h-3.5 fill-current"><path d="M16 4.64c-6.96 0-12.64 4.48-12.64 10.08 0 3.52 2.32 6.64 5.76 8.48l-1.44 5.44c-0.08 0.4 0.32 0.64 0.64 0.48l6.16-4.08c0.48 0.08 0.96 0.08 1.52 0.08 6.96 0 12.64-4.48 12.64-10.08 0-5.6-5.68-10.08-12.64-10.08z"/></svg>
+                                    카톡 공유
                                 </button>
+                                
                             </div>
                             <p className="text-sm text-blue-600 font-bold">⏰ {room.예약가능시간}</p>
                         </div>
