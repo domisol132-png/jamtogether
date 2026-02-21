@@ -5,7 +5,6 @@ import { Analytics } from "@vercel/analytics/react"
 import { Map, CustomOverlayMap, useKakaoLoader } from "react-kakao-maps-sdk"
 import toast, { Toaster } from 'react-hot-toast';
 // 🌟 [핵심] 외부 링크 대신, 내 컴퓨터(node_modules)에 있는 기본 이미지 가져오기
-import { Map, CustomOverlayMap } from "react-kakao-maps-sdk"
 
 
 // ... (이 아래 REGION_MAPPING 부터는 그대로 둬도 된다) ...
