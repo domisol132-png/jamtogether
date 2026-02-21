@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRef } from 'react';
-
+import { Map, CustomOverlayMap, useKakaoLoader } from "react-kakao-maps-sdk"
 import { Analytics } from "@vercel/analytics/react"
 import { Map, CustomOverlayMap } from "react-kakao-maps-sdk"
 import toast, { Toaster } from 'react-hot-toast';
@@ -36,6 +36,9 @@ const TimeInput = ({ label, value, setValue, suffix, min = 0, max = 24 }) => {
 }
 
 function App() {
+  const [kakaoLoading, kakaoError] = useKakaoLoader({
+    appkey: "d627f6cea680314e7ba4743e4d1bff78", 
+  })
   const [allStudios, setAllStudios] = useState([]) 
   const [rooms, setRooms] = useState([])           
   const [isSearched, setIsSearched] = useState(false)
@@ -257,13 +260,31 @@ function App() {
       {/* 🌟 [필수] 토스트 기계 설치 (return 문 안쪽, 맨 위에 두면 됨) */}
       <Toaster />
       <Analytics /> 
+{/* 🛡️ 3. 엔진 부팅 화면 (백지화 방지) */}
+      {kakaoLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-[5000]">
+            <span className="text-xl font-bold text-gray-400 animate-pulse">🗺️ 카카오 지도 엔진 부팅 중...</span>
+        </div>
+      )}
 
-      {/* 🚀 모든 껍데기를 벗겨내고 순수하게 맵만 강제 렌더링합니다! */}
-      <Map 
-        center={{ lat: mapCenter[0], lng: mapCenter[1] }} 
-        style={{ width: "100vw", height: "100dvh", position: "absolute", top: 0, left: 0, zIndex: 0 }}
-        level={4}
-      >
+      {/* 🚨 4. 403 / 통신 차단 방어막 (앱이 죽지 않고 원인을 명확히 출력) */}
+      {kakaoError && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-50 z-[5000] p-6 text-center">
+            <span className="text-4xl mb-4">🚨</span>
+            <h3 className="text-xl font-bold text-red-600 mb-2">카카오 지도 차단됨</h3>
+            <p className="text-sm text-red-500 font-medium leading-relaxed">
+                현재 브라우저의 보안 설정이 지도 데이터를 차단했습니다.<br/><br/>
+                <b>스마트폰의 기본 브라우저(Safari/Chrome)</b>로<br/>다시 접속해 주십시오.
+            </p>
+        </div>
+      )}
+      {/* 🚀 5. 안전이 확보되었을 때만 지도 렌더링! */}
+      {!kakaoLoading && !kakaoError && (
+        <Map 
+          center={{ lat: mapCenter[0], lng: mapCenter[1] }} 
+          style={{ width: "100vw", height: "100dvh", position: "absolute", top: 0, left: 0, zIndex: 0 }}
+          level={4}
+        >
         {!isSearched ? (
           // 🌑 검색 전: 회색의 시크한 알약 모양 마커 (모든 합주실)
           allStudios.map((studio, index) => (
@@ -297,7 +318,7 @@ function App() {
           ))
       )}
     </Map>
-      
+      )}
       {/* 🌟 갇혀있던 FAQ 버튼 구출 (z-index: 1000 -> 3000으로 승급!) */}
       <button 
         onClick={() => setIsFaqOpen(true)}
