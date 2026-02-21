@@ -5,7 +5,7 @@ import { Analytics } from "@vercel/analytics/react"
 
 import toast, { Toaster } from 'react-hot-toast';
 // 🌟 [핵심] 외부 링크 대신, 내 컴퓨터(node_modules)에 있는 기본 이미지 가져오기
-import { Map, CustomOverlayMap } from "react-kakao-maps-sdk"
+import { Map, CustomOverlayMap, useKakaoLoader } from "react-kakao-maps-sdk"
 
 
 // ... (이 아래 REGION_MAPPING 부터는 그대로 둬도 된다) ...
@@ -37,6 +37,10 @@ const TimeInput = ({ label, value, setValue, suffix, min = 0, max = 24 }) => {
 }
 
 function App() {
+  // 🚀 App 함수가 시작되자마자 리액트가 카카오 API를 직접 소환함
+  const [kakaoLoading, kakaoError] = useKakaoLoader({
+    appkey: "d627f6cea680314e7ba4743e4d1bff78", 
+  })
   const [allStudios, setAllStudios] = useState([]) 
   const [rooms, setRooms] = useState([])           
   const [isSearched, setIsSearched] = useState(false)
@@ -260,11 +264,11 @@ function App() {
       {/* 🌟 [필수] 토스트 기계 설치 (return 문 안쪽, 맨 위에 두면 됨) */}
       <Toaster />
       <Analytics /> {/* 🚀 이 한 줄이 방문자 데이터를 수집한다! */}
-      {/* 🚀 압도적인 퀄리티의 카카오 지도 이식 (렌더링 방어막 포함) */}
+      {/* 🚀 수정: 절대 위치(absolute)와 inset: 0을 반드시 추가하여 캔버스 붕괴 방어 */}
       <Map 
         center={{ lat: mapCenter[0], lng: mapCenter[1] }} 
-        style={{ width: "100%", height: "100%", zIndex: 0 }}
-        level={4} // 확대 수준 (숫자가 작을수록 확대됨)
+        style={{ width: "100%", height: "100%", position: "absolute", inset: 0, zIndex: 0 }}
+        level={4} 
       >
         {!isSearched ? (
             // 🌑 검색 전: 회색의 시크한 알약 모양 마커 (모든 합주실)
