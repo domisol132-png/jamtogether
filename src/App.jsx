@@ -5,7 +5,7 @@ import { Analytics } from "@vercel/analytics/react"
 
 import toast, { Toaster } from 'react-hot-toast';
 // 🌟 [핵심] 외부 링크 대신, 내 컴퓨터(node_modules)에 있는 기본 이미지 가져오기
-import { Map, CustomOverlayMap, useKakaoLoader } from "react-kakao-maps-sdk"
+import { Map, CustomOverlayMap } from "react-kakao-maps-sdk"
 
 
 // ... (이 아래 REGION_MAPPING 부터는 그대로 둬도 된다) ...
@@ -37,10 +37,6 @@ const TimeInput = ({ label, value, setValue, suffix, min = 0, max = 24 }) => {
 }
 
 function App() {
-  // 🚀 App 함수가 시작되자마자 리액트가 카카오 API를 직접 소환함
-  const [kakaoLoading, kakaoError] = useKakaoLoader({
-    appkey: "d627f6cea680314e7ba4743e4d1bff78", 
-  })
   const [allStudios, setAllStudios] = useState([]) 
   const [rooms, setRooms] = useState([])           
   const [isSearched, setIsSearched] = useState(false)
@@ -59,7 +55,6 @@ function App() {
     return new Date(Date.now() - offset).toISOString().split('T')[0];
   };
 
-  // ❌ 기존: const [date, setDate] = useState('2026-02-22')
   // ✅ 수정: 이제 접속할 때마다 '오늘 날짜'가 기본으로 뜹니다.
   const [date, setDate] = useState(getTodayKST());
   const [startTime, setStartTime] = useState(16)
