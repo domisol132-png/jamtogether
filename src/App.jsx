@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useRef } from 'react';
 
 import { Analytics } from "@vercel/analytics/react"
-import { Map, CustomOverlayMap, useKakaoLoader } from "react-kakao-maps-sdk"
+import { Map, CustomOverlayMap } from "react-kakao-maps-sdk"
 import toast, { Toaster } from 'react-hot-toast';
 // 🌟 [핵심] 외부 링크 대신, 내 컴퓨터(node_modules)에 있는 기본 이미지 가져오기
 
@@ -36,10 +36,6 @@ const TimeInput = ({ label, value, setValue, suffix, min = 0, max = 24 }) => {
 }
 
 function App() {
-  // 🚀 2. 엔진 로딩 상태를 정확히 추적하는 클러치 장착
-  const [kakaoLoading, kakaoError] = useKakaoLoader({
-    appkey: "d627f6cea680314e7ba4743e4d1bff78", 
-  })
   const [allStudios, setAllStudios] = useState([]) 
   const [rooms, setRooms] = useState([])           
   const [isSearched, setIsSearched] = useState(false)
@@ -261,26 +257,6 @@ function App() {
       {/* 🌟 [필수] 토스트 기계 설치 (return 문 안쪽, 맨 위에 두면 됨) */}
       <Toaster />
       <Analytics /> 
-
-      {/* 🛡️ 1. 엔진 부팅 중 */}
-      {kakaoLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-0">
-            <span className="text-xl font-bold text-gray-400 animate-pulse">🗺️ 카카오 지도 엔진 부팅 중...</span>
-        </div>
-      )}
-
-      {/* 🚨 2. 통신 차단(에러) 방어막: 엔진이 죽으면 리액트를 살리고 경고창을 띄움 */}
-      {kakaoError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-50 z-[9999] p-6 text-center">
-            <span className="text-4xl mb-4">🚨</span>
-            <h3 className="text-xl font-bold text-red-600 mb-2">카카오 API 통신 차단됨!</h3>
-            <p className="text-sm text-red-500 font-medium leading-relaxed">
-                1. 브라우저의 <b>광고 차단기(Adblock, Brave 쉴드 등)</b>를 당장 꺼라.<br/>
-                2. 주소창이 127.0.0.1이 아닌 <b>localhost:5173</b>인지 확인해라.
-            </p>
-            <p className="text-xs text-red-300 mt-4 font-mono">{String(kakaoError)}</p>
-        </div>
-      )}
 
       {/* 🚀 3. 완벽하게 부팅 완료되었을 때만 지도 렌더링 (!kakaoError 조건 추가) */}
       {!kakaoLoading && !kakaoError && (
