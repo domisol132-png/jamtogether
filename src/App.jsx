@@ -36,9 +36,7 @@ const TimeInput = ({ label, value, setValue, suffix, min = 0, max = 24 }) => {
 
 function App() {
   const [kakaoReady, setKakaoReady] = useState(false);
-  const [kakaoLoading, kakaoError] = useKakaoLoader({
-    appkey: "d627f6cea680314e7ba4743e4d1bff78", 
-  })
+
   const [allStudios, setAllStudios] = useState([]) 
   const [rooms, setRooms] = useState([])           
   const [isSearched, setIsSearched] = useState(false)
