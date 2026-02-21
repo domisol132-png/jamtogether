@@ -280,7 +280,7 @@ function App() {
       {kakaoLoaded && (
         <Map 
           center={{ lat: mapCenter[0], lng: mapCenter[1] }} 
-          style={{ width: "100%", height: "100%", position: "absolute", inset: 0, zIndex: 0 }}
+          style={{ width: "100vw", height: "100dvh", position: "absolute", top: 0, left: 0, zIndex: 0 }}
           level={4}
         >
           {!isSearched ? (
