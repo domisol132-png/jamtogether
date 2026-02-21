@@ -258,47 +258,46 @@ function App() {
       <Toaster />
       <Analytics /> 
 
-      {/* 🚀 3. 완벽하게 부팅 완료되었을 때만 지도 렌더링 (!kakaoError 조건 추가) */}
-      {!kakaoLoading && !kakaoError && (
-        <Map 
-          center={{ lat: mapCenter[0], lng: mapCenter[1] }} 
-          style={{ width: "100vw", height: "100dvh", position: "absolute", top: 0, left: 0, zIndex: 0 }}
-          level={4}
-        >
-          {!isSearched ? (
-            // 🌑 검색 전: 회색의 시크한 알약 모양 마커 (모든 합주실)
-            allStudios.map((studio, index) => (
-                <CustomOverlayMap key={index} position={{ lat: studio.lat, lng: studio.lon }} yAnchor={1}>
-                    <div 
-                      onClick={() => window.open(studio.url, '_blank')}
-                      className="bg-gray-800 text-white px-3 py-1.5 rounded-full shadow-md border border-gray-600 text-xs font-bold opacity-80 hover:opacity-100 hover:scale-110 transition-all cursor-pointer whitespace-nowrap"
-                    >
-                        {studio.name}
+      {/* 🚀 모든 껍데기를 벗겨내고 순수하게 맵만 강제 렌더링합니다! */}
+      <Map 
+        center={{ lat: mapCenter[0], lng: mapCenter[1] }} 
+        style={{ width: "100vw", height: "100dvh", position: "absolute", top: 0, left: 0, zIndex: 0 }}
+        level={4}
+      >
+        {!isSearched ? (
+          // 🌑 검색 전: 회색의 시크한 알약 모양 마커 (모든 합주실)
+          allStudios.map((studio, index) => (
+              <CustomOverlayMap key={index} position={{ lat: studio.lat, lng: studio.lon }} yAnchor={1}>
+                  <div 
+                    onClick={() => window.open(studio.url, '_blank')}
+                    className="bg-gray-800 text-white px-3 py-1.5 rounded-full shadow-md border border-gray-600 text-xs font-bold opacity-80 hover:opacity-100 hover:scale-110 transition-all cursor-pointer whitespace-nowrap"
+                  >
+                      {studio.name}
+                  </div>
+              </CustomOverlayMap>
+          ))
+      ) : (
+          // 🔴 검색 후: 빈 방이 있는 합주실만 빨간색으로 통통 튀게 강조 (토스 스타일 UX)
+          rooms.map((room, index) => (
+              room.lat && room.lon ? (
+                <CustomOverlayMap key={index} position={{ lat: room.lat, lng: room.lon }} yAnchor={1}>
+                    <div className="flex flex-col items-center animate-bounce-short">
+                        <div className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-t-md">
+                            {room.예약가능시간.includes('확인') ? '⚠️ 확인불가' : '예약가능!'}
+                        </div>
+                        <div 
+                          onClick={() => window.open(room.예약링크, '_blank')}
+                          className={`${room.예약가능시간.includes('확인') ? 'bg-orange-500' : 'bg-red-500'} text-white px-4 py-2 rounded-b-xl rounded-tr-xl shadow-lg border-2 border-white text-sm font-extrabold hover:scale-110 transition-all cursor-pointer whitespace-nowrap`}
+                        >
+                            {room.합주실}
+                        </div>
                     </div>
                 </CustomOverlayMap>
-            ))
-        ) : (
-            // 🔴 검색 후: 빈 방이 있는 합주실만 빨간색으로 통통 튀게 강조 (토스 스타일 UX)
-            rooms.map((room, index) => (
-                room.lat && room.lon ? (
-                  <CustomOverlayMap key={index} position={{ lat: room.lat, lng: room.lon }} yAnchor={1}>
-                      <div className="flex flex-col items-center animate-bounce-short">
-                          <div className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-t-md">
-                              {room.예약가능시간.includes('확인') ? '⚠️ 확인불가' : '예약가능!'}
-                          </div>
-                          <div 
-                            onClick={() => window.open(room.예약링크, '_blank')}
-                            className={`${room.예약가능시간.includes('확인') ? 'bg-orange-500' : 'bg-red-500'} text-white px-4 py-2 rounded-b-xl rounded-tr-xl shadow-lg border-2 border-white text-sm font-extrabold hover:scale-110 transition-all cursor-pointer whitespace-nowrap`}
-                          >
-                              {room.합주실}
-                          </div>
-                      </div>
-                  </CustomOverlayMap>
-                ) : null
-            ))
-        )}
-      </Map>
+              ) : null
+          ))
       )}
+    </Map>
+      
       {/* 🌟 갇혀있던 FAQ 버튼 구출 (z-index: 1000 -> 3000으로 승급!) */}
       <button 
         onClick={() => setIsFaqOpen(true)}
