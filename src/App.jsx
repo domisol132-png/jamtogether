@@ -182,15 +182,16 @@ function App() {
     }
   }
 
- // 🚀 [신규] 카카오톡 바이럴 카드 발사 함수
+ // 🚀 [수정] 카카오톡 바이럴 카드 발사 함수 (정보 재배치 완료)
   const shareKakao = (room) => {
     if (window.Kakao) {
       window.Kakao.Share.sendDefault({
         objectType: 'feed',
         content: {
-          title: `🎸 [잼투게더] 합주실 스캔 완료!`,
-          description: `📍 합주실: ${room.합주실}\n📅 날짜: ${date}\n⏰ 시간: ${room.예약가능시간}\n\n지금 바로 예약하세요.`,
-          // 우리가 OG 태그에 썼던 메인 이미지를 영수증 배경으로 재활용한다
+          // 🌟 가장 중요한 방 이름을 절대 잘리지 않는 '타이틀'에 박아넣는다
+          title: `🎸 ${room.합주실} `,
+          // 🌟 예약 시간과 날짜를 최상단으로 끌어올려 '...'에 먹히지 않게 방어한다
+          description: `⏰ 시간: ${room.예약가능시간}\n📅 날짜: ${date}\n⚡ 지금 예약하기.`,
           imageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200&auto=format&fit=crop',
           link: {
             mobileWebUrl: room.예약링크,
@@ -199,7 +200,7 @@ function App() {
         },
         buttons: [
           {
-            title: '네이버로 예약하기',
+            title: '예약 바로가기',
             link: {
               mobileWebUrl: room.예약링크,
               webUrl: room.예약링크,
