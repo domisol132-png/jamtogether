@@ -131,15 +131,22 @@ function App() {
       })
       .catch(err => console.error("로딩 실패:", err))
   }, []); // 👈 두 번째 방 닫힘
-// 🌟 3번 엔진: 카카오 API 수동 점화
+// 🌟 3번 엔진: 카카오 도착 추적 레이더 (Race Condition 완벽 방어)
   useEffect(() => {
-    // index.html에서 받아온 카카오 스크립트가 준비되었는지 확인
-    if (window.kakao && window.kakao.maps) {
-      // 리액트가 렌더링될 때 수동으로 로드(Load) 명령을 내림
-      window.kakao.maps.load(() => {
-        setKakaoLoaded(true); // 시동 켜짐!
-      });
-    }
+    // 0.1초(100ms)마다 카카오 스크립트가 로딩되었는지 감시하는 레이더 작동
+    const radar = setInterval(() => {
+      // 카카오가 마침내 도착했다면?
+      if (window.kakao && window.kakao.maps) {
+        // 즉시 지도 엔진에 불을 붙임
+        window.kakao.maps.load(() => {
+          setKakaoLoaded(true); // 계기판 파란불 ON!
+          clearInterval(radar); // 시동 걸었으니 레이더는 끈다
+        });
+      }
+    }, 100);
+
+    // 컴포넌트가 꺼질 때 레이더도 청소하는 안전장치
+    return () => clearInterval(radar);
   }, []);
   useEffect(() => {
     let interval;
