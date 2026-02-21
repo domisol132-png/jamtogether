@@ -262,15 +262,28 @@ function App() {
       <Toaster />
       <Analytics /> 
 
-      {/* 🛡️ 1. loading -> kakaoLoading 으로 이름 변경 */}
+      {/* 🛡️ 1. 엔진 부팅 중 */}
       {kakaoLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-0">
             <span className="text-xl font-bold text-gray-400 animate-pulse">🗺️ 카카오 지도 엔진 부팅 중...</span>
         </div>
       )}
 
-      {/* 🚀 2. !loading -> !kakaoLoading 으로 이름 변경 */}
-      {!kakaoLoading && (
+      {/* 🚨 2. 통신 차단(에러) 방어막: 엔진이 죽으면 리액트를 살리고 경고창을 띄움 */}
+      {kakaoError && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-50 z-[9999] p-6 text-center">
+            <span className="text-4xl mb-4">🚨</span>
+            <h3 className="text-xl font-bold text-red-600 mb-2">카카오 API 통신 차단됨!</h3>
+            <p className="text-sm text-red-500 font-medium leading-relaxed">
+                1. 브라우저의 <b>광고 차단기(Adblock, Brave 쉴드 등)</b>를 당장 꺼라.<br/>
+                2. 주소창이 127.0.0.1이 아닌 <b>localhost:5173</b>인지 확인해라.
+            </p>
+            <p className="text-xs text-red-300 mt-4 font-mono">{String(kakaoError)}</p>
+        </div>
+      )}
+
+      {/* 🚀 3. 완벽하게 부팅 완료되었을 때만 지도 렌더링 (!kakaoError 조건 추가) */}
+      {!kakaoLoading && !kakaoError && (
         <Map 
           center={{ lat: mapCenter[0], lng: mapCenter[1] }} 
           style={{ width: "100vw", height: "100dvh", position: "absolute", top: 0, left: 0, zIndex: 0 }}
