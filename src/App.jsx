@@ -42,6 +42,9 @@ function App() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [loading, setLoading] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(true) 
+
+  const [kakaoReady, setKakaoReady] = useState(false);
+  const [scriptError, setScriptError] = useState(false);
   const sheetRef = useRef(null);
   const isKakaoLoaded = typeof window !== "undefined" && window.kakao && window.kakao.maps;
   // 🌟 [신규] FAQ 모달 상태
@@ -103,6 +106,38 @@ function App() {
       setSheetHeight(newHeight); // 손 뗄 때만 최종 위치 저장
     }
   };
+  useEffect(() => {
+    // 이미 켜져있다면 패스
+    if (window.kakao && window.kakao.maps) {
+      setKakaoReady(true);
+      return;
+    }
+
+    const scriptId = "kakao-map-script";
+    const existingScript = document.getElementById(scriptId);
+
+    // HTML에 직접 쓰지 않고 리액트가 스크립트를 생성해서 꽂아넣음
+    if (!existingScript) {
+      const script = document.createElement("script");
+      script.id = scriptId;
+      script.src = "https://dapi.kakao.com/v2/maps/sdk.js?appkey=d627f6cea680314e7ba4743e4d1bff78&autoload=false";
+      script.async = true;
+      
+      // 🚀 카카오 스크립트가 다운로드 완료되면 엔진 점화! (영상과 동일한 논리)
+      script.onload = () => {
+        window.kakao.maps.load(() => {
+          setKakaoReady(true);
+        });
+      };
+
+      // 차단기 등에 막혀서 실패하면 에러 띄움
+      script.onerror = () => {
+        setScriptError(true);
+      };
+
+      document.head.appendChild(script);
+    }
+  }, []);
   // 🌟 1번 엔진: PWA 설치 팝업 가로채기
   useEffect(() => {
     const radar = setInterval(() => {
@@ -266,17 +301,24 @@ function App() {
       {/* 🌟 [필수] 토스트 기계 설치 (return 문 안쪽, 맨 위에 두면 됨) */}
       <Toaster />
       <Analytics /> 
-      {/* 🚨 스크립트가 완전히 차단당했을 때만 뜨는 최후의 경고창 */}
-      {!isKakaoLoaded && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 z-[5000] p-6 text-center text-white">
-            <span className="text-4xl mb-4">☠️</span>
-            <h3 className="text-xl font-bold mb-2">카카오 스크립트 로딩 실패</h3>
-            <p className="text-sm text-gray-400">네트워크나 브라우저 차단기를 확인하십시오.</p>
+      {/* 🛡️ 3. 부팅 중 화면 (이제 스크립트를 기다려줌) */}
+      {!kakaoReady && !scriptError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 z-[5000] text-white font-bold text-xl animate-pulse">
+            🗺️ 카카오 지도 엔진 로딩 중...
         </div>
       )}
 
-      {/* 🚀 카카오가 무사히 도착했을 때만 순수 렌더링! */}
-      {isKakaoLoaded && (
+      {/* 🚨 4. 에러 발생 화면 */}
+      {scriptError && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-900 z-[5000] p-6 text-center text-white">
+            <span className="text-4xl mb-4">☠️</span>
+            <h3 className="text-xl font-bold mb-2">카카오 스크립트 차단됨</h3>
+            <p className="text-sm text-gray-300">네트워크나 브라우저 차단기를 끄고 새로고침 해봐.</p>
+        </div>
+      )}
+
+      {/* 🚀 5. 완벽하게 시동이 걸렸을 때만 지도 렌더링! */}
+      {kakaoReady && (
         <Map 
           center={{ lat: mapCenter[0], lng: mapCenter[1] }} 
           style={{ width: "100vw", height: "100dvh", position: "absolute", top: 0, left: 0, zIndex: 0 }}
