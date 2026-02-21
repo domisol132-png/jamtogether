@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useRef } from 'react';
 import { Map, CustomOverlayMap, useKakaoLoader } from "react-kakao-maps-sdk"
 import { Analytics } from "@vercel/analytics/react"
-import { Map, CustomOverlayMap } from "react-kakao-maps-sdk"
 import toast, { Toaster } from 'react-hot-toast';
 // 🌟 [핵심] 외부 링크 대신, 내 컴퓨터(node_modules)에 있는 기본 이미지 가져오기
 
