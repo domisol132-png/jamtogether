@@ -65,7 +65,8 @@ function App() {
   const [searchError, setSearchError] = useState("")
   const [sheetHeight, setSheetHeight] = useState(35);
   const [failedStudios, setFailedStudios] = useState([]); // 🌟 [추가] 에러 난 합주실 보관소
-
+// 🚀 [신규 추가] 카카오 엔진이 켜졌는지 확인하는 계기판
+  const [kakaoLoaded, setKakaoLoaded] = useState(false);
   // 🌟 [추가] 록스타 로딩 문구 리스트 & 현재 인덱스
   const loadingPhrases = [
     "탐색 중...",
@@ -130,7 +131,16 @@ function App() {
       })
       .catch(err => console.error("로딩 실패:", err))
   }, []); // 👈 두 번째 방 닫힘
-
+// 🌟 3번 엔진: 카카오 API 수동 점화
+  useEffect(() => {
+    // index.html에서 받아온 카카오 스크립트가 준비되었는지 확인
+    if (window.kakao && window.kakao.maps) {
+      // 리액트가 렌더링될 때 수동으로 로드(Load) 명령을 내림
+      window.kakao.maps.load(() => {
+        setKakaoLoaded(true); // 시동 켜짐!
+      });
+    }
+  }, []);
   useEffect(() => {
     let interval;
     if (loading) {
@@ -259,13 +269,14 @@ function App() {
       {/* 🌟 [필수] 토스트 기계 설치 (return 문 안쪽, 맨 위에 두면 됨) */}
       <Toaster />
       <Analytics /> {/* 🚀 이 한 줄이 방문자 데이터를 수집한다! */}
-      {/* 🚀 수정: 절대 위치(absolute)와 inset: 0을 반드시 추가하여 캔버스 붕괴 방어 */}
-      <Map 
-        center={{ lat: mapCenter[0], lng: mapCenter[1] }} 
-        style={{ width: "100%", height: "100%", position: "absolute", inset: 0, zIndex: 0 }}
-        level={4} 
-      >
-        {!isSearched ? (
+      {/* 🚀 시동이 완벽하게 걸렸을 때만 지도를 화면에 출력하도록 방어막(kakaoLoaded &&)을 씌워라! */}
+      {kakaoLoaded && (
+        <Map 
+          center={{ lat: mapCenter[0], lng: mapCenter[1] }} 
+          style={{ width: "100%", height: "100%", position: "absolute", inset: 0, zIndex: 0 }}
+          level={4}
+        >
+          {!isSearched ? (
             // 🌑 검색 전: 회색의 시크한 알약 모양 마커 (모든 합주실)
             allStudios.map((studio, index) => (
                 <CustomOverlayMap key={index} position={{ lat: studio.lat, lng: studio.lon }} yAnchor={1}>
@@ -298,7 +309,7 @@ function App() {
             ))
         )}
       </Map>
-
+)}
       {/* 🌟 갇혀있던 FAQ 버튼 구출 (z-index: 1000 -> 3000으로 승급!) */}
       <button 
         onClick={() => setIsFaqOpen(true)}
