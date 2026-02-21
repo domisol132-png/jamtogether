@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useRef } from 'react';
 
 import { Analytics } from "@vercel/analytics/react"
-
+import { Map, CustomOverlayMap, useKakaoLoader } from "react-kakao-maps-sdk"
 import toast, { Toaster } from 'react-hot-toast';
 // 🌟 [핵심] 외부 링크 대신, 내 컴퓨터(node_modules)에 있는 기본 이미지 가져오기
 import { Map, CustomOverlayMap } from "react-kakao-maps-sdk"
@@ -37,6 +37,10 @@ const TimeInput = ({ label, value, setValue, suffix, min = 0, max = 24 }) => {
 }
 
 function App() {
+  // 🚀 2. 엔진 로딩 상태를 정확히 추적하는 클러치 장착
+  const [kakaoLoading, kakaoError] = useKakaoLoader({
+    appkey: "d627f6cea680314e7ba4743e4d1bff78", 
+  })
   const [allStudios, setAllStudios] = useState([]) 
   const [rooms, setRooms] = useState([])           
   const [isSearched, setIsSearched] = useState(false)
@@ -257,8 +261,17 @@ function App() {
     <div className="relative w-full h-[100dvh] overflow-hidden font-sans bg-gray-100 overscroll-none touch-pan-x touch-pan-y">
       {/* 🌟 [필수] 토스트 기계 설치 (return 문 안쪽, 맨 위에 두면 됨) */}
       <Toaster />
-      <Analytics /> {/* 🚀 이 한 줄이 방문자 데이터를 수집한다! */}
-      {/* 🚀 시동이 완벽하게 걸렸을 때만 지도를 화면에 출력하도록 방어막(kakaoLoaded &&)을 씌워라! */}
+      <Analytics /> 
+
+      {/* 🛡️ 1. loading -> kakaoLoading 으로 이름 변경 */}
+      {kakaoLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-0">
+            <span className="text-xl font-bold text-gray-400 animate-pulse">🗺️ 카카오 지도 엔진 부팅 중...</span>
+        </div>
+      )}
+
+      {/* 🚀 2. !loading -> !kakaoLoading 으로 이름 변경 */}
+      {!kakaoLoading && (
         <Map 
           center={{ lat: mapCenter[0], lng: mapCenter[1] }} 
           style={{ width: "100vw", height: "100dvh", position: "absolute", top: 0, left: 0, zIndex: 0 }}
@@ -297,6 +310,7 @@ function App() {
             ))
         )}
       </Map>
+      )}
       {/* 🌟 갇혀있던 FAQ 버튼 구출 (z-index: 1000 -> 3000으로 승급!) */}
       <button 
         onClick={() => setIsFaqOpen(true)}
