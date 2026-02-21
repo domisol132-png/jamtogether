@@ -100,7 +100,7 @@ function App() {
   const [expandedRegions, setExpandedRegions] = useState(["홍대입구역 근처"])
   const [searchError, setSearchError] = useState("")
   const [sheetHeight, setSheetHeight] = useState(35);
-
+  const [failedStudios, setFailedStudios] = useState([]); // 🌟 [추가] 에러 난 합주실 보관소
 
   // 🌟 [추가] 록스타 로딩 문구 리스트 & 현재 인덱스
   const loadingPhrases = [
@@ -246,19 +246,36 @@ function App() {
       const response = await fetch(`https://jam-backend-yk57.onrender.com/search?${queryParams.toString()}`)
       const data = await response.json()
       
-      if (data.results.length === 0) {
+      // 🚀 [추가] 백엔드에서 받은 데이터를 '정상'과 '실패'로 쪼갭니다.
+      const validRooms = data.results.filter(room => room.예약가능시간 !== "확인 불가");
+      const errorRooms = data.results.filter(room => room.예약가능시간 === "확인 불가");
+      
+      // 실패한 합주실 이름만 중복 없이 추출 (예: '그라운드', '하모닉스')
+      const errorNames = [...new Set(errorRooms.map(r => r.합주실.split(" ")[0]))];
+      setFailedStudios(errorNames);
+
+      // 😭 완벽하게 탐색했지만 진짜 빈 방이 없는 경우 (True Empty)
+      if (validRooms.length === 0 && errorRooms.length === 0) {
         setSearchError("😭 조건에 맞는 방이 없어요! 시간이나 날짜를 변경해보세요.")
         setLoading(false)
         return
       }
 
-      setRooms(data.results)
+      // ⚠️ 빈 방은 하나도 없는데, 서버가 터진 합주실만 있는 경우
+      if (validRooms.length === 0 && errorRooms.length > 0) {
+         setSearchError(`⚠️ 네이버 예약 서버 지연으로 ${errorNames.join(", ")}의 상태를 확인할 수 없습니다. 잠시 후 다시 시도해주세요.`);
+         setLoading(false)
+         return
+      }
+
+      // ✅ 하나라도 빈 방을 찾은 경우 (에러가 일부 섞여 있어도 바텀 시트를 올림)
+      setRooms(validRooms)
       setIsSearched(true)
       setIsSearchOpen(false) 
-      setSheetHeight(35) // 🌟 [추가] 새 검색 시 바텀 시트 높이를 다시 기본 35vh로 리셋
+      setSheetHeight(35) 
 
-      if (data.results.length > 0 && data.results[0].lat) {
-        setMapCenter([data.results[0].lat, data.results[0].lon])
+      if (validRooms.length > 0 && validRooms[0].lat) {
+        setMapCenter([validRooms[0].lat, validRooms[0].lon])
       }
     } catch (error) {
       setSearchError("서버 통신 실패! 백엔드를 확인해주세요.")
@@ -496,6 +513,17 @@ function App() {
 
             {/* 방 목록 */}
             <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3 custom-scrollbar">
+                
+                {/* 🛡️ 방폭문 UI: 실패한 합주실이 있을 때만 경고 배너 출력 */}
+                {failedStudios.length > 0 && (
+                    <div className="bg-orange-50 border border-orange-200 p-3 rounded-xl flex items-start gap-2 mb-3">
+                        <span className="text-orange-500 mt-0.5">⚠️</span>
+                        <p className="text-xs text-orange-700 leading-relaxed font-medium">
+                            네이버 서버 지연으로 <br/>
+                            <b>{failedStudios.join(", ")}</b>의 상태를 불러오지 못했습니다.
+                        </p>
+                    </div>
+                )}
                 {rooms.map((room, index) => (
                     <div key={index} className="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
                         
