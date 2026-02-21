@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRef } from 'react';
-import { Map, CustomOverlayMap } from "react-kakao-maps-sdk"
+import { Map, CustomOverlayMap, useKakaoLoader } from "react-kakao-maps-sdk"
 import { Analytics } from "@vercel/analytics/react"
 import toast, { Toaster } from 'react-hot-toast';
 // 🌟 [핵심] 외부 링크 대신, 내 컴퓨터(node_modules)에 있는 기본 이미지 가져오기
@@ -43,13 +43,14 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(true) 
 
-  const [kakaoReady, setKakaoReady] = useState(false);
-  const [scriptError, setScriptError] = useState(false);
+
   const sheetRef = useRef(null);
-  const isKakaoLoaded = typeof window !== "undefined" && window.kakao && window.kakao.maps;
+  const [activeStudio, setActiveStudio] = useState(null)
   // 🌟 [신규] FAQ 모달 상태
   const [isFaqOpen, setIsFaqOpen] = useState(false)
-  
+  const [kakaoLoading, kakaoError] = useKakaoLoader({
+    appkey: "d627f6cea680314e7ba4743e4d1bff78", 
+  })
   // 🌟 한국 시간(KST) 기준으로 오늘 날짜를 YYYY-MM-DD 형식으로 가져오는 마법의 함수
   const getTodayKST = () => {
     const offset = new Date().getTimezoneOffset() * 60000;
@@ -301,8 +302,8 @@ function App() {
       {/* 🌟 [필수] 토스트 기계 설치 (return 문 안쪽, 맨 위에 두면 됨) */}
       <Toaster />
       <Analytics /> 
-      {/* 🛡️ 3. 부팅 중 화면 (이제 스크립트를 기다려줌) */}
-      {!kakaoReady && !scriptError && (
+      {/* 🚀 렌더링 방어막 */}
+      {kakaoLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-800 z-[5000] text-white font-bold text-xl animate-pulse">
             🗺️ 카카오 지도 엔진 로딩 중...
         </div>
@@ -317,46 +318,75 @@ function App() {
         </div>
       )}
 
-      {/* 🚀 5. 완벽하게 시동이 걸렸을 때만 지도 렌더링! */}
-      {kakaoReady && (
+      {!kakaoLoading && !kakaoError && (
         <Map 
           center={{ lat: mapCenter[0], lng: mapCenter[1] }} 
           style={{ width: "100vw", height: "100dvh", position: "absolute", top: 0, left: 0, zIndex: 0 }}
           level={4}
+          // 🚀 지도의 빈 공간을 클릭하면 열려있던 팝업을 닫는다
+          onClick={() => setActiveStudio(null)} 
         >
         {!isSearched ? (
-          // 🌑 검색 전: 회색의 시크한 알약 모양 마커 (모든 합주실)
-          allStudios.map((studio, index) => (
-              <CustomOverlayMap key={index} position={{ lat: studio.lat, lng: studio.lon }} yAnchor={1}>
-                  <div 
-                    onClick={() => window.open(studio.url, '_blank')}
-                    className="bg-gray-800 text-white px-3 py-1.5 rounded-full shadow-md border border-gray-600 text-xs font-bold opacity-80 hover:opacity-100 hover:scale-110 transition-all cursor-pointer whitespace-nowrap"
-                  >
-                      {studio.name}
-                  </div>
-              </CustomOverlayMap>
-          ))
-      ) : (
-          // 🔴 검색 후: 빈 방이 있는 합주실만 빨간색으로 통통 튀게 강조 (토스 스타일 UX)
-          rooms.map((room, index) => (
-              room.lat && room.lon ? (
-                <CustomOverlayMap key={index} position={{ lat: room.lat, lng: room.lon }} yAnchor={1}>
-                    <div className="flex flex-col items-center animate-bounce-short">
-                        <div className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-t-md">
-                            {room.예약가능시간.includes('확인') ? '⚠️ 확인불가' : '예약가능!'}
+              // 🌑 검색 전: 깔끔한 다크그레이 원형 핀 (기본 상태)
+              allStudios.map((studio, index) => (
+                <div key={`all-${index}`}>
+                  <CustomOverlayMap position={{ lat: studio.lat, lng: studio.lon }} yAnchor={0.5}>
+                      <div 
+                        onClick={(e) => { e.stopPropagation(); setActiveStudio(studio.name); }}
+                        className="w-6 h-6 bg-gray-700 rounded-full border-2 border-white shadow-md flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+                      >
+                          <span className="text-white text-[10px]">🎸</span>
+                      </div>
+                  </CustomOverlayMap>
+
+                  {/* 💬 마커를 클릭했을 때만 위쪽으로 뿅 나타나는 팝업 */}
+                  {activeStudio === studio.name && (
+                    <CustomOverlayMap position={{ lat: studio.lat, lng: studio.lon }} yAnchor={1.5} zIndex={10}>
+                        <div className="bg-white p-3 rounded-2xl shadow-xl border border-gray-200 flex flex-col items-center min-w-[120px] animate-fade-in-up">
+                            <span className="font-extrabold text-gray-800 text-sm mb-2">{studio.name}</span>
+                            <button onClick={() => window.open(studio.url, '_blank')} className="bg-gray-800 text-white text-xs font-bold px-4 py-2 rounded-xl w-full hover:bg-gray-900 transition-colors">
+                                정보 보기
+                            </button>
                         </div>
-                        <div 
-                          onClick={() => window.open(room.예약링크, '_blank')}
-                          className={`${room.예약가능시간.includes('확인') ? 'bg-orange-500' : 'bg-red-500'} text-white px-4 py-2 rounded-b-xl rounded-tr-xl shadow-lg border-2 border-white text-sm font-extrabold hover:scale-110 transition-all cursor-pointer whitespace-nowrap`}
-                        >
-                            {room.합주실}
-                        </div>
+                    </CustomOverlayMap>
+                  )}
+                </div>
+              ))
+          ) : (
+              // 🔴 검색 후: 눈에 띄는 빨간색/주황색 마커
+              rooms.map((room, index) => {
+                  const isError = room.예약가능시간.includes('확인');
+                  return room.lat && room.lon ? (
+                    <div key={`room-${index}`}>
+                      <CustomOverlayMap position={{ lat: room.lat, lng: room.lon }} yAnchor={0.5}>
+                          <div 
+                            onClick={(e) => { e.stopPropagation(); setActiveStudio(room.합주실); }}
+                            className={`w-8 h-8 rounded-full border-[3px] border-white shadow-lg flex items-center justify-center cursor-pointer animate-bounce-short ${isError ? 'bg-orange-500' : 'bg-red-500'}`}
+                          >
+                              <span className="text-white text-xs">{isError ? '⚠️' : '🔥'}</span>
+                          </div>
+                      </CustomOverlayMap>
+
+                      {/* 💬 마커 클릭 시 나타나는 상세 예약 팝업 */}
+                      {activeStudio === room.합주실 && (
+                        <CustomOverlayMap position={{ lat: room.lat, lng: room.lon }} yAnchor={1.3} zIndex={10}>
+                            <div className="bg-white p-3.5 rounded-2xl shadow-2xl border border-gray-200 flex flex-col items-center min-w-[160px] animate-fade-in-up">
+                                <span className="font-extrabold text-gray-900 text-[15px] mb-1 truncate w-full text-center">{room.합주실}</span>
+                                <span className="text-xs text-blue-600 font-extrabold mb-3">⏰ {room.예약가능시간}</span>
+                                <button 
+                                  onClick={() => window.open(room.예약링크, '_blank')} 
+                                  className={`${isError ? 'bg-orange-500' : 'bg-red-500'} text-white text-sm font-bold px-4 py-2.5 rounded-xl w-full hover:scale-105 active:scale-95 transition-all shadow-md`}
+                                >
+                                    예약하기
+                                </button>
+                            </div>
+                        </CustomOverlayMap>
+                      )}
                     </div>
-                </CustomOverlayMap>
-              ) : null
-          ))
-      )}
-    </Map>
+                  ) : null;
+              })
+          )}
+        </Map>
       )}
       {/* 🌟 갇혀있던 FAQ 버튼 구출 (z-index: 1000 -> 3000으로 승급!) */}
       <button 
