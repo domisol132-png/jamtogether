@@ -1,10 +1,9 @@
+// ✅ 수정된 main.jsx 코드 (완벽한 자유 보장)
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
-import './index.css' // 👈 🌟 이 줄이 없으면 Tailwind는 작동하지 않는다! (반드시 추가)
+import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
     <App />
-  </React.StrictMode>,
 )
