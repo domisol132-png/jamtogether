@@ -274,25 +274,25 @@ function App() {
           center={{ lat: mapCenter[0], lng: mapCenter[1] }} 
           style={{ width: "100vw", height: "100dvh", position: "absolute", top: 0, left: 0, zIndex: 0 }}
           level={4}
-          // 🚀 지도의 빈 공간을 클릭하면 열려있던 팝업을 닫는다
           onClick={() => setActiveStudio(null)} 
         >
-        {!isSearched ? (
-              // 🌑 검색 전: 깔끔한 다크그레이 원형 핀 (기본 상태)
+          {!isSearched ? (
+              // 🌑 검색 전: 다크그레이 색상의 클래식 물방울 핀 + 음표
               allStudios.map((studio, index) => (
                 <div key={`all-${index}`}>
-                  <CustomOverlayMap position={{ lat: studio.lat, lng: studio.lon }} yAnchor={0.5}>
+                  <CustomOverlayMap position={{ lat: studio.lat, lng: studio.lon }} yAnchor={1}>
                       <div 
                         onClick={(e) => { e.stopPropagation(); setActiveStudio(studio.name); }}
-                        className="w-6 h-6 bg-gray-700 rounded-full border-2 border-white shadow-md flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+                        className="relative flex items-center justify-center w-7 h-7 bg-gray-700 rounded-[50%_50%_50%_0] -rotate-45 shadow-md border-2 border-white cursor-pointer hover:scale-110 transition-transform"
                       >
-                          <span className="text-white text-[10px]">🎸</span>
+                          {/* 핀이 45도 돌아갔으므로, 안의 내용물은 반대로 45도 돌려준다 */}
+                          <span className="text-white text-[11px] rotate-45">🎵</span>
                       </div>
                   </CustomOverlayMap>
 
-                  {/* 💬 마커를 클릭했을 때만 위쪽으로 뿅 나타나는 팝업 */}
+                  {/* 💬 마커 클릭 팝업 (🚀 clickable={true} 추가로 버튼 클릭 부활!) */}
                   {activeStudio === studio.name && (
-                    <CustomOverlayMap position={{ lat: studio.lat, lng: studio.lon }} yAnchor={1.5} zIndex={10}>
+                    <CustomOverlayMap position={{ lat: studio.lat, lng: studio.lon }} yAnchor={1.6} zIndex={10} clickable={true}>
                         <div className="bg-white p-3 rounded-2xl shadow-xl border border-gray-200 flex flex-col items-center min-w-[120px] animate-fade-in-up">
                             <span className="font-extrabold text-gray-800 text-sm mb-2">{studio.name}</span>
                             <button onClick={() => window.open(studio.url, '_blank')} className="bg-gray-800 text-white text-xs font-bold px-4 py-2 rounded-xl w-full hover:bg-gray-900 transition-colors">
@@ -304,29 +304,30 @@ function App() {
                 </div>
               ))
           ) : (
-              // 🔴 검색 후: 눈에 띄는 빨간색/주황색 마커
+              // 🔴 검색 후: 눈에 띄는 빨간색 물방울 핀 + 음표
               rooms.map((room, index) => {
                   const isError = room.예약가능시간.includes('확인');
                   return room.lat && room.lon ? (
                     <div key={`room-${index}`}>
-                      <CustomOverlayMap position={{ lat: room.lat, lng: room.lon }} yAnchor={0.5}>
+                      <CustomOverlayMap position={{ lat: room.lat, lng: room.lon }} yAnchor={1}>
                           <div 
                             onClick={(e) => { e.stopPropagation(); setActiveStudio(room.합주실); }}
-                            className={`w-8 h-8 rounded-full border-[3px] border-white shadow-lg flex items-center justify-center cursor-pointer animate-bounce-short ${isError ? 'bg-orange-500' : 'bg-red-500'}`}
+                            className={`relative flex items-center justify-center w-9 h-9 rounded-[50%_50%_50%_0] -rotate-45 border-[3px] border-white shadow-lg cursor-pointer animate-bounce-short ${isError ? 'bg-orange-500' : 'bg-red-500'}`}
                           >
-                              <span className="text-white text-xs">{isError ? '⚠️' : '🔥'}</span>
+                              <span className="text-white text-[13px] rotate-45">{isError ? '⚠️' : '🎵'}</span>
                           </div>
                       </CustomOverlayMap>
 
-                      {/* 💬 마커 클릭 시 나타나는 상세 예약 팝업 */}
+                      {/* 💬 마커 클릭 상세 예약 팝업 (🚀 clickable={true} 추가 & 버튼 초록색 변경) */}
                       {activeStudio === room.합주실 && (
-                        <CustomOverlayMap position={{ lat: room.lat, lng: room.lon }} yAnchor={1.3} zIndex={10}>
+                        <CustomOverlayMap position={{ lat: room.lat, lng: room.lon }} yAnchor={1.4} zIndex={10} clickable={true}>
                             <div className="bg-white p-3.5 rounded-2xl shadow-2xl border border-gray-200 flex flex-col items-center min-w-[160px] animate-fade-in-up">
                                 <span className="font-extrabold text-gray-900 text-[15px] mb-1 truncate w-full text-center">{room.합주실}</span>
                                 <span className="text-xs text-blue-600 font-extrabold mb-3">⏰ {room.예약가능시간}</span>
                                 <button 
                                   onClick={() => window.open(room.예약링크, '_blank')} 
-                                  className={`${isError ? 'bg-orange-500' : 'bg-red-500'} text-white text-sm font-bold px-4 py-2.5 rounded-xl w-full hover:scale-105 active:scale-95 transition-all shadow-md`}
+                                  // 🌟 에러면 주황색, 정상이면 결과창과 동일한 초록색(bg-green-500)으로 일치시킴
+                                  className={`${isError ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'} text-white text-sm font-bold px-4 py-2.5 rounded-xl w-full hover:scale-105 active:scale-95 transition-all shadow-md`}
                                 >
                                     예약하기
                                 </button>
