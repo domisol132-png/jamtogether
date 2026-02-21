@@ -65,8 +65,6 @@ function App() {
   const [searchError, setSearchError] = useState("")
   const [sheetHeight, setSheetHeight] = useState(35);
   const [failedStudios, setFailedStudios] = useState([]); // 🌟 [추가] 에러 난 합주실 보관소
-// 🚀 [신규 추가] 카카오 엔진이 켜졌는지 확인하는 계기판
-  const [kakaoLoaded, setKakaoLoaded] = useState(false);
   // 🌟 [추가] 록스타 로딩 문구 리스트 & 현재 인덱스
   const loadingPhrases = [
     "탐색 중...",
@@ -131,23 +129,7 @@ function App() {
       })
       .catch(err => console.error("로딩 실패:", err))
   }, []); // 👈 두 번째 방 닫힘
-// 🌟 3번 엔진: 카카오 도착 추적 레이더 (Race Condition 완벽 방어)
-  useEffect(() => {
-    // 0.1초(100ms)마다 카카오 스크립트가 로딩되었는지 감시하는 레이더 작동
-    const radar = setInterval(() => {
-      // 카카오가 마침내 도착했다면?
-      if (window.kakao && window.kakao.maps) {
-        // 즉시 지도 엔진에 불을 붙임
-        window.kakao.maps.load(() => {
-          setKakaoLoaded(true); // 계기판 파란불 ON!
-          clearInterval(radar); // 시동 걸었으니 레이더는 끈다
-        });
-      }
-    }, 100);
-
-    // 컴포넌트가 꺼질 때 레이더도 청소하는 안전장치
-    return () => clearInterval(radar);
-  }, []);
+  
   useEffect(() => {
     let interval;
     if (loading) {
@@ -277,7 +259,6 @@ function App() {
       <Toaster />
       <Analytics /> {/* 🚀 이 한 줄이 방문자 데이터를 수집한다! */}
       {/* 🚀 시동이 완벽하게 걸렸을 때만 지도를 화면에 출력하도록 방어막(kakaoLoaded &&)을 씌워라! */}
-      {kakaoLoaded && (
         <Map 
           center={{ lat: mapCenter[0], lng: mapCenter[1] }} 
           style={{ width: "100vw", height: "100dvh", position: "absolute", top: 0, left: 0, zIndex: 0 }}
@@ -316,7 +297,6 @@ function App() {
             ))
         )}
       </Map>
-)}
       {/* 🌟 갇혀있던 FAQ 버튼 구출 (z-index: 1000 -> 3000으로 승급!) */}
       <button 
         onClick={() => setIsFaqOpen(true)}
