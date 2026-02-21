@@ -107,49 +107,9 @@ function App() {
       setSheetHeight(newHeight); // 손 뗄 때만 최종 위치 저장
     }
   };
-  useEffect(() => {
-    // 이미 켜져있다면 패스
-    if (window.kakao && window.kakao.maps) {
-      setKakaoReady(true);
-      return;
-    }
-
-    const scriptId = "kakao-map-script";
-    const existingScript = document.getElementById(scriptId);
-
-    // HTML에 직접 쓰지 않고 리액트가 스크립트를 생성해서 꽂아넣음
-    if (!existingScript) {
-      const script = document.createElement("script");
-      script.id = scriptId;
-      script.src = "https://dapi.kakao.com/v2/maps/sdk.js?appkey=d627f6cea680314e7ba4743e4d1bff78&autoload=false";
-      script.async = true;
-      
-      // 🚀 카카오 스크립트가 다운로드 완료되면 엔진 점화! (영상과 동일한 논리)
-      script.onload = () => {
-        window.kakao.maps.load(() => {
-          setKakaoReady(true);
-        });
-      };
-
-      // 차단기 등에 막혀서 실패하면 에러 띄움
-      script.onerror = () => {
-        setScriptError(true);
-      };
-
-      document.head.appendChild(script);
-    }
-  }, []);
+  
   // 🌟 1번 엔진: PWA 설치 팝업 가로채기
   useEffect(() => {
-    const radar = setInterval(() => {
-      if (window.kakao && window.kakao.maps) {
-        window.kakao.maps.load(() => {
-          setKakaoReady(true); // 시동 켜짐!
-          clearInterval(radar); // 레이더 종료
-        });
-      }
-    }, 100);
-    
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -306,15 +266,6 @@ function App() {
       {kakaoLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-800 z-[5000] text-white font-bold text-xl animate-pulse">
             🗺️ 카카오 지도 엔진 로딩 중...
-        </div>
-      )}
-
-      {/* 🚨 4. 에러 발생 화면 */}
-      {scriptError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-900 z-[5000] p-6 text-center text-white">
-            <span className="text-4xl mb-4">☠️</span>
-            <h3 className="text-xl font-bold mb-2">카카오 스크립트 차단됨</h3>
-            <p className="text-sm text-gray-300">네트워크나 브라우저 차단기를 끄고 새로고침 해봐.</p>
         </div>
       )}
 
