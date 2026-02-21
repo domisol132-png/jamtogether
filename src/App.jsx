@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRef } from 'react';
-import { Map, CustomOverlayMap } from "react-kakao-maps-sdk"
+import { Map, CustomOverlayMap, useKakaoLoader } from "react-kakao-maps-sdk"
 import { Analytics } from "@vercel/analytics/react"
 import toast, { Toaster } from 'react-hot-toast';
 // 🌟 [핵심] 외부 링크 대신, 내 컴퓨터(node_modules)에 있는 기본 이미지 가져오기
@@ -35,8 +35,6 @@ const TimeInput = ({ label, value, setValue, suffix, min = 0, max = 24 }) => {
 }
 
 function App() {
-  const [kakaoReady, setKakaoReady] = useState(false);
-
   const [allStudios, setAllStudios] = useState([]) 
   const [rooms, setRooms] = useState([])           
   const [isSearched, setIsSearched] = useState(false)
@@ -45,7 +43,9 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(true) 
   const sheetRef = useRef(null);
-
+  const [kakaoLoading, kakaoError] = useKakaoLoader({
+    appkey: "d627f6cea680314e7ba4743e4d1bff78", 
+  })
   // 🌟 [신규] FAQ 모달 상태
   const [isFaqOpen, setIsFaqOpen] = useState(false)
   
@@ -268,15 +268,23 @@ function App() {
       {/* 🌟 [필수] 토스트 기계 설치 (return 문 안쪽, 맨 위에 두면 됨) */}
       <Toaster />
       <Analytics /> 
-{/* 🛡️ 4. 엔진 부팅 중일 때의 방어막 */}
-      {!kakaoReady && (
+      {/* 🛡️ 4. 엔진 부팅 중일 때의 방어막 */}
+      {kakaoLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-0">
-            <span className="text-xl font-bold text-gray-400 animate-pulse">🗺️ 카카오 지도 렌더링 준비 중...</span>
+            <span className="text-xl font-bold text-gray-400 animate-pulse">🗺️ 카카오 지도 엔진 공식 부팅 중...</span>
+        </div>
+      )}
+      {/* 🚨 5. 에러 발생 시의 방어막 (403이 뜨면 여기서 잡아냅니다) */}
+      {kakaoError && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-50 z-[5000] p-6 text-center">
+            <span className="text-4xl mb-4">🚨</span>
+            <h3 className="text-xl font-bold text-red-600 mb-2">통신 에러</h3>
+            <p className="text-sm text-red-500 font-mono">{String(kakaoError)}</p>
         </div>
       )}
 
-      {/* 🚀 5. 시동이 완벽하게 걸렸을 때만 순수하게 지도 렌더링! */}
-      {kakaoReady && (
+      {/* 🚀 6. 시동이 완벽하게 걸렸을 때만 순수하게 지도 렌더링! */}
+      {!kakaoLoading && !kakaoError && (
         <Map 
           center={{ lat: mapCenter[0], lng: mapCenter[1] }} 
           style={{ width: "100vw", height: "100dvh", position: "absolute", top: 0, left: 0, zIndex: 0 }}
