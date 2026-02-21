@@ -1,47 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+
 import { Analytics } from "@vercel/analytics/react"
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
+
 import toast, { Toaster } from 'react-hot-toast';
 // 🌟 [핵심] 외부 링크 대신, 내 컴퓨터(node_modules)에 있는 기본 이미지 가져오기
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+import { Map, CustomOverlayMap } from "react-kakao-maps-sdk"
 
-// ---------------------------------------------------------
-// 📍 [Ultimate Fix] 로컬 이미지 + CSS 필터 (절대 안 깨짐)
-// ---------------------------------------------------------
-
-// 🔴 검색 결과용 (CSS로 빨갛게 만든 핀)
-const RedIcon = L.icon({
-  iconUrl: icon,          // 로컬 기본 이미지
-  shadowUrl: iconShadow,  // 로컬 그림자
-  iconSize: [25, 41],     // 표준 크기
-  iconAnchor: [12, 41],   // 뾰족한 끝 위치
-  popupAnchor: [1, -34],
-  className: 'red-filter' // 🌟 CSS 마법 적용! (파랑 -> 빨강)
-});
-
-// 🌑 구경 모드용 (CSS로 회색으로 만든 핀)
-const GrayIcon = L.icon({
-  iconUrl: icon,
-  shadowUrl: iconShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  className: 'gray-filter' // 🌟 CSS 마법 적용! (파랑 -> 회색)
-});
-
-// 기본 아이콘 덮어쓰기
-L.Marker.prototype.options.icon = RedIcon;
-
-// 지도 이동 도우미
-function ChangeView({ center, zoom }) {
-  const map = useMap();
-  map.setView(center, zoom);
-  return null;
-}
 
 // ... (이 아래 REGION_MAPPING 부터는 그대로 둬도 된다) ...
 const REGION_MAPPING = {
@@ -295,40 +260,45 @@ function App() {
       {/* 🌟 [필수] 토스트 기계 설치 (return 문 안쪽, 맨 위에 두면 됨) */}
       <Toaster />
       <Analytics /> {/* 🚀 이 한 줄이 방문자 데이터를 수집한다! */}
-      <MapContainer center={mapCenter} zoom={15} style={{ height: "100%", width: "100%", zIndex: 0 }}>
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
-        <ChangeView center={mapCenter} zoom={15} />
-
+      {/* 🚀 압도적인 퀄리티의 카카오 지도 이식 (렌더링 방어막 포함) */}
+      <Map 
+        center={{ lat: mapCenter[0], lng: mapCenter[1] }} 
+        style={{ width: "100%", height: "100%", zIndex: 0 }}
+        level={4} // 확대 수준 (숫자가 작을수록 확대됨)
+      >
         {!isSearched ? (
+            // 🌑 검색 전: 회색의 시크한 알약 모양 마커 (모든 합주실)
             allStudios.map((studio, index) => (
-                <Marker key={index} position={[studio.lat, studio.lon]} icon={GrayIcon}>
-                    <Popup>
-                        <div className="text-center p-1 min-w-[150px]">
-                            <h3 className="font-extrabold text-gray-800 text-lg mb-2">{studio.name}</h3>
-                            <a href={studio.url} target="_blank" className="block w-full bg-gray-800 text-white px-3 py-2.5 rounded-lg text-sm font-bold hover:bg-black transition-colors shadow-md">
-                                🔗 예약 페이지 이동
-                            </a>
-                        </div>
-                    </Popup>
-                </Marker>
+                <CustomOverlayMap key={index} position={{ lat: studio.lat, lng: studio.lon }} yAnchor={1}>
+                    <div 
+                      onClick={() => window.open(studio.url, '_blank')}
+                      className="bg-gray-800 text-white px-3 py-1.5 rounded-full shadow-md border border-gray-600 text-xs font-bold opacity-80 hover:opacity-100 hover:scale-110 transition-all cursor-pointer whitespace-nowrap"
+                    >
+                        {studio.name}
+                    </div>
+                </CustomOverlayMap>
             ))
         ) : (
+            // 🔴 검색 후: 빈 방이 있는 합주실만 빨간색으로 통통 튀게 강조 (토스 스타일 UX)
             rooms.map((room, index) => (
                 room.lat && room.lon ? (
-                  <Marker key={index} position={[room.lat, room.lon]} icon={RedIcon}>
-                    <Popup>
-                      <div className="text-center p-1 min-w-[150px]">
-                        <span className="inline-block bg-blue-100 text-blue-600 text-xs px-2 py-0.5 rounded mb-1 font-bold">예약 가능!</span>
-                        <h3 className="font-bold text-lg text-gray-900 mb-1">{room.합주실}</h3>
-                        <p className="font-bold text-blue-600 mb-3 text-base">{room.예약가능시간}</p>
-                        <a href={room.예약링크} target="_blank" className="block w-full bg-green-500 text-white px-3 py-2.5 rounded-lg text-sm font-bold hover:bg-green-600 transition-colors shadow-md">🚀 예약하러 가기</a>
+                  <CustomOverlayMap key={index} position={{ lat: room.lat, lng: room.lon }} yAnchor={1}>
+                      <div className="flex flex-col items-center animate-bounce-short">
+                          <div className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-t-md">
+                              {room.예약가능시간.includes('확인') ? '⚠️ 확인불가' : '예약가능!'}
+                          </div>
+                          <div 
+                            onClick={() => window.open(room.예약링크, '_blank')}
+                            className={`${room.예약가능시간.includes('확인') ? 'bg-orange-500' : 'bg-red-500'} text-white px-4 py-2 rounded-b-xl rounded-tr-xl shadow-lg border-2 border-white text-sm font-extrabold hover:scale-110 transition-all cursor-pointer whitespace-nowrap`}
+                          >
+                              {room.합주실}
+                          </div>
                       </div>
-                    </Popup>
-                  </Marker>
+                  </CustomOverlayMap>
                 ) : null
             ))
         )}
-      </MapContainer>
+      </Map>
 
       {/* 🌟 갇혀있던 FAQ 버튼 구출 (z-index: 1000 -> 3000으로 승급!) */}
       <button 
