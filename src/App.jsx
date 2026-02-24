@@ -4,12 +4,12 @@ import { Map, CustomOverlayMap, useKakaoLoader } from "react-kakao-maps-sdk"
 import { Analytics } from "@vercel/analytics/react"
 import toast, { Toaster } from 'react-hot-toast';
 // 🌟 [핵심] 외부 링크 대신, 내 컴퓨터(node_modules)에 있는 기본 이미지 가져오기
-
+import { STUDIO_DB } from './data.js';
 
 // ... (이 아래 REGION_MAPPING 부터는 그대로 둬도 된다) ...
 const REGION_MAPPING = {
     "홍대입구역 근처": ["그라운드합주실 본점", "그라운드합주실 홍대1호점", "제시뮤직 합주실 홍대점", "하모닉스 합주실", "하모닉스 합주실 2호점", "사운드시티 합주실 홍대역점", "호랑이합주실"],
-    "합정/망원 ": ["그라운드합주실 합정1호점", "Chama Studio", "에비로드 합주실"],
+    "합정/망원 ": ["그라운드합주실 합정1호점", "사운드시티 합주실 합정 본점", "Chama Studio", "에비로드 합주실"],
     "신촌/이대 ": ["그라운드합주실 신촌1호점"]
 }
 
@@ -122,17 +122,23 @@ function App() {
   }, []); // 👈 첫 번째 방 닫힘
 
 
-  // 🌟 2번 엔진: 백엔드 서버와 통신하기 (이제 회색 불이 켜질 겁니다!)
+ // 🚀 [신규] 백엔드 없이 프론트엔드에서 즉각적으로 핀(Pin) 렌더링
   useEffect(() => {
-    fetch('https://jam-backend-yk57.onrender.com/all-studios')
-      .then(res => res.json())
-      .then(data => {
-        setAllStudios(data.studios)
-        const allNames = Object.values(REGION_MAPPING).flat(); 
-        setSelectedStudios(allNames)
-      })
-      .catch(err => console.error("로딩 실패:", err))
-  }, []); // 👈 두 번째 방 닫힘
+    // 1. STUDIO_DB에서 합주실 브랜드별로 '첫 번째 방'의 좌표와 링크만 뽑아내서 지도용 마커 배열 생성
+    const localStudios = Object.keys(STUDIO_DB).map(studioName => ({
+        name: studioName,
+        lat: STUDIO_DB[studioName][0].lat,
+        lon: STUDIO_DB[studioName][0].lon,
+        // 특정 룸 링크가 아닌, 합주실 메인 홈 링크로 가공
+        url: STUDIO_DB[studioName][0].url.split('/items')[0] 
+    }));
+    setAllStudios(localStudios);
+
+    // 2. 초기 세팅: 앱 켜지자마자 12개 전부 선택된 상태로 둔다 (15개 리미터 통과)
+    const allNames = Object.values(REGION_MAPPING).flat(); 
+    setSelectedStudios(allNames);
+  }, []);
+
   // 🌟 카카오톡 공유 SDK 초기화 (앱 켜질 때 1번만)
   useEffect(() => {
     // 대문자 Kakao를 쓴다 (지도는 소문자 kakao)
@@ -221,28 +227,41 @@ function App() {
     setLoading(true)
     
     try {
-      // 🚨 대참사의 원인이었던 파라미터 부분을 정상 복구했다.
-      const queryParams = new URLSearchParams({
-        date: date,
-        start_time: startTime,
-        end_time: endTime,
-        min_hours: minHours
-      })
-      
-      selectedStudios.forEach(s => queryParams.append('studios', s))
+      // 🌟 1. 프론트엔드의 사령탑 역할: 선택된 합주실 브랜드들의 '모든 룸(Room)' 데이터를 긁어모은다
+      const targetRooms = [];
+      selectedStudios.forEach(studioName => {
+          if (STUDIO_DB[studioName]) {
+              targetRooms.push(...STUDIO_DB[studioName]);
+          }
+      });
 
-      const response = await fetch(`https://jam-backend-yk57.onrender.com/search?${queryParams.toString()}`)
-      const data = await response.json()
+      // 🌟 2. 백엔드에 GET 파라미터 대신, POST 방식으로 페이로드(명령서) 투척!
+      const response = await fetch('https://jam-backend-yk57.onrender.com/search', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+              date: date,
+              start_time: startTime,
+              end_time: endTime,
+              min_hours: minHours,
+              rooms: targetRooms // 👈 백엔드는 이제 이 보따리에 든 링크들만 무지성으로 스캔한다
+          })
+      });
+      
+      if (!response.ok) throw new Error("서버 에러");
+      const data = await response.json();
       
       // 🚀 [추가] 백엔드에서 받은 데이터를 '정상'과 '실패'로 쪼갭니다.
       const validRooms = data.results.filter(room => room.예약가능시간 !== "확인 불가");
       const errorRooms = data.results.filter(room => room.예약가능시간 === "확인 불가");
       
-      // 실패한 합주실 이름만 중복 없이 추출 (예: '그라운드', '하모닉스')
+      // 실패한 합주실 이름만 중복 없이 추출
       const errorNames = [...new Set(errorRooms.map(r => r.합주실.split(" ")[0]))];
       setFailedStudios(errorNames);
 
-      // 😭 완벽하게 탐색했지만 진짜 빈 방이 없는 경우 (True Empty)
+      // 😭 완벽하게 탐색했지만 진짜 빈 방이 없는 경우
       if (validRooms.length === 0 && errorRooms.length === 0) {
         setSearchError("😭 조건에 맞는 방이 없어요! 시간이나 날짜를 변경해보세요.")
         setLoading(false)
@@ -256,7 +275,7 @@ function App() {
          return
       }
 
-      // ✅ 하나라도 빈 방을 찾은 경우 (에러가 일부 섞여 있어도 바텀 시트를 올림)
+      // ✅ 하나라도 빈 방을 찾은 경우
       setRooms(validRooms)
       setIsSearched(true)
       setIsSearchOpen(false) 
@@ -266,6 +285,7 @@ function App() {
         setMapCenter([validRooms[0].lat, validRooms[0].lon])
       }
     } catch (error) {
+      console.error(error);
       setSearchError("서버 통신 실패! 백엔드를 확인해주세요.")
     }
     setLoading(false)
