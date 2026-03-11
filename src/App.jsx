@@ -70,11 +70,11 @@ function App() {
   // 🌟 [추가] 록스타 로딩 문구 리스트 & 현재 인덱스
   const loadingPhrases = [
     "탐색 중...",
-    "🎸 앰프 진공관 예열하는 중...",
-    "🥁 스네어 드럼 튜닝 중...",
-    "🎤 마이크 테스트! 아, 아!",
-    "🔌 이펙터 페달 연결하는 중...",
-    "🤘 슬랩으로 그루브 시동 거는 중...",
+    "앰프 진공관 예열하는 중...",
+    "스네어 드럼 튜닝 중...",
+    "마이크 테스트! 아, 아!",
+    "이펙터 페달 연결하는 중...",
+    "슬랩으로 그루브 시동 거는 중...",
     "🎧 춤을 추며 절망이랑 싸울 거야..."
   ];
   const [loadingIndex, setLoadingIndex] = useState(0);
@@ -188,34 +188,108 @@ function App() {
     }
   }
 
- // 🚀 [수정] 카카오톡 바이럴 카드 발사 함수 (정보 재배치 완료)
-  const shareKakao = (room) => {
-    if (window.Kakao) {
-      window.Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
-          // 🌟 가장 중요한 방 이름을 절대 잘리지 않는 '타이틀'에 박아넣는다
-          title: `🎸 ${room.합주실} `,
-          // 🌟 예약 시간과 날짜를 최상단으로 끌어올려 '...'에 먹히지 않게 방어한다
-          description: `⏰ 시간: ${room.예약가능시간}\n📅 날짜: ${date}\n⚡ 지금 예약하기.`,
-          imageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200&auto=format&fit=crop',
-          link: {
-            mobileWebUrl: room.예약링크,
-            webUrl: room.예약링크,
-          },
-        },
-        buttons: [
-          {
-            title: '예약 바로가기',
-            link: {
-              mobileWebUrl: room.예약링크,
-              webUrl: room.예약링크,
-            },
-          },
-        ],
-      });
-    } else {
+ // 🚀 [신규] 스마트폰을 티켓 인쇄소로 만드는 다이내믹 공유 엔진 (가로형 규격)
+  const shareKakao = async (room) => {
+    if (!window.Kakao) {
       toast.error("카카오톡 공유 엔진을 불러오지 못했습니다.");
+      return;
+    }
+
+    // 1. 유저가 기다리지 않게 즉각적인 피드백 (토스트 알림)
+    const toastId = toast.loading("준비 중입니다...");
+
+    try {
+      // 2. 가상의 도화지(Canvas) 생성 (가로형 800x420 규격)
+        const canvas = document.createElement("canvas");
+        canvas.width = 800;  
+        canvas.height = 420; 
+        const ctx = canvas.getContext("2d");
+
+        // 3. 네가 만든 빈 템플릿 이미지 불러오기
+        const img = new Image();
+        img.src = "/ticket-bg.jpg"; // 새로 만든 템플릿 파일명 확인!
+        img.crossOrigin = "Anonymous";
+
+        img.onload = () => {
+          // 도화지에 템플릿 배경 깔기
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          // ==========================================
+          // 🎨 4. 티켓 위에 텍스트 인쇄하기 (최종 ticket-bg.jpg 맞춤 좌표)
+          // ==========================================
+          
+          ctx.fillStyle = "#111111"; // 묵직한 먹색 텍스트
+          ctx.textAlign = "left"; // 좌측 정렬 
+          
+          // 📍 Passenger: 네 기획대로 코드를 넣지 않고 빈칸으로 둔다.
+
+          // 📍 Place (합주실 이름 - 우측 상단 빈 공간을 지배하도록 거대하게!)
+          ctx.font = "46px 'Anton', sans-serif"; 
+          // x: 380 (대략 중앙 빈 공간 시작점), y: 150 (passenger 라인과 비슷한 높이)
+          ctx.fillText(room.합주실, 380, 150, 380); // 최대 너비 380px 제한
+
+          // 📍 Date (날짜 & 시간 포맷팅)
+          ctx.font = "24px 'Anton', sans-serif";
+          const dateObj = new Date(date);
+          const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+          const formattedDate = `${monthNames[dateObj.getMonth()]} ${String(dateObj.getDate()).padStart(2, '0')}, ${dateObj.getFullYear()}`;
+          
+          // x: 440 ('date:' 라벨 텍스트 끝나는 지점 바로 옆), y: 260
+          ctx.fillText(`${formattedDate} | ${room.예약가능시간}`, 440, 260, 340); 
+
+          // ==========================================
+          
+          // ... [이후 canvas.toBlob 및 Kakao.Share 로직은 그대로 유지] ...
+
+        // 5. 완성된 캔버스를 이미지 파일(Blob)로 변환
+        canvas.toBlob(async (blob) => {
+          const file = new File([blob], "jam_ticket.jpg", { type: "image/jpeg" });
+
+          try {
+            // 6. 카카오 클라우드에 방금 만든 티켓을 몰래 업로드하고 URL 뜯어오기
+            const response = await window.Kakao.Share.uploadImage({
+              file: [file]
+            });
+            const uploadedImageUrl = response.infos[0].url;
+
+            // 7. 진짜 카톡 메시지 발사! (이미지는 방금 만든 티켓으로 교체됨)
+            window.Kakao.Share.sendDefault({
+              objectType: 'feed',
+              content: {
+                 title: `🎸 ${room.합주실} `,
+                description: `⏰ 시간: ${room.예약가능시간}\n📅 날짜: ${date}\n⚡ 지금 예약하기.`,
+                imageUrl: uploadedImageUrl, // 👈 다이내믹 티켓 URL 삽입!
+                link: {
+                  mobileWebUrl: room.예약링크,
+                  webUrl: room.예약링크,
+                },
+              },
+              buttons: [
+                {
+                  title: '예약 바로가기',
+                  link: {
+                    mobileWebUrl: room.예약링크,
+                    webUrl: room.예약링크,
+                  },
+                },
+              ],
+            });
+            
+            toast.success("업로드 완료", { id: toastId });
+          } catch (uploadError) {
+            console.error(uploadError);
+            toast.error("이미지 업로드에 실패했습니다.", { id: toastId });
+          }
+        }, "image/jpeg", 0.9);
+      };
+
+      img.onerror = () => {
+        toast.error("티켓 템플릿을 불러오지 못했습니다.", { id: toastId });
+      };
+
+    } catch (error) {
+      console.error(error);
+      toast.error("티켓 생성 중 오류가 발생했습니다.", { id: toastId });
     }
   };
   const handleSearch = async () => {
