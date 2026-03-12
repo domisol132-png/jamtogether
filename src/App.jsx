@@ -208,7 +208,6 @@ function App() {
         // 3. 네가 만든 빈 템플릿 이미지 불러오기
         const img = new Image();
         img.src = "/ticket-bg.jpg"; // 새로 만든 템플릿 파일명 확인!
-        img.crossOrigin = "Anonymous";
 
         img.onload = () => {
           // 도화지에 템플릿 배경 깔기
