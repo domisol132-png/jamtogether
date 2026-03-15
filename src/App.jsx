@@ -255,7 +255,7 @@ function App() {
             const response = await window.Kakao.Share.uploadImage({
               file: [file]
             });
-            const uploadedImageUrl = response.infos[0].url;
+            const uploadedImageUrl = response.infos.original.url;
 
             // 7. 카톡 메시지 발사! (이전 코드와 동일)
             window.Kakao.Share.sendDefault({
