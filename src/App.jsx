@@ -242,16 +242,22 @@ function App() {
 
         // 5. 완성된 캔버스를 이미지 파일(Blob)로 변환
         canvas.toBlob(async (blob) => {
+          // 🚨 [에러 추적 1] 변환된 파일이 텅 비어있는지 확인
+          if (!blob) {
+            toast.error("이미지 압축 실패! (템플릿 용량이 너무 크거나 보안 에러입니다)", { id: toastId });
+            return;
+          }
+
           const file = new File([blob], "jam_ticket.jpg", { type: "image/jpeg" });
 
           try {
-            // 6. 카카오 클라우드에 방금 만든 티켓을 몰래 업로드하고 URL 뜯어오기
+            // 6. 카카오 클라우드에 업로드
             const response = await window.Kakao.Share.uploadImage({
               file: [file]
             });
             const uploadedImageUrl = response.infos[0].url;
 
-            // 7. 진짜 카톡 메시지 발사! (이미지는 방금 만든 티켓으로 교체됨)
+            // 7. 카톡 메시지 발사! (이전 코드와 동일)
             window.Kakao.Share.sendDefault({
               objectType: 'feed',
               content: {
@@ -274,10 +280,11 @@ function App() {
               ],
             });
             
-            toast.success("업로드 완료", { id: toastId });
+            toast.success("업로드 완료!", { id: toastId });
           } catch (uploadError) {
             console.error(uploadError);
-            toast.error("이미지 업로드에 실패했습니다.", { id: toastId });
+            // 🚨 [에러 추적 2] 카카오가 구체적으로 뭐라고 화내는지 화면에 출력
+            toast.error(`카카오 에러: ${uploadError.message || "업로드 거부됨"}`, { id: toastId });
           }
         }, "image/jpeg", 0.9);
       };
