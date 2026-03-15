@@ -263,6 +263,8 @@ function App() {
               content: {
                  title: `🎸 ${room.합주실} `,
                 description: `⏰ 시간: ${room.예약가능시간}\n📅 날짜: ${date}\n⚡ 지금 예약하기.`,
+                imageWidth: 800,  // 👈 추가: 카카오야, 이 이미지는 가로가 800이다!
+                imageHeight: 420, // 👈 추가: 세로는 420이니까 자르지 말고 가로형으로 다 보여줘!
                 imageUrl: uploadedImageUrl, // 👈 다이내믹 티켓 URL 삽입!
                 link: {
                   mobileWebUrl: room.예약링크,
