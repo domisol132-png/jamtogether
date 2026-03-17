@@ -553,7 +553,7 @@ function App() {
             <div className="absolute inset-0 z-[2000] bg-black/60 flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm transition-opacity">
               <div className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl shadow-2xl h-[90vh] sm:h-auto max-h-[90vh] flex flex-col">
                 <div className="p-6 pb-2 flex justify-between items-center border-b border-gray-100 shrink-0">
-                  <h2 className="text-2xl font-extrabold text-gray-900">🎸 빈 방 찾기</h2>
+                  <h2 className="text-2xl font-extrabold text-gray-900"> 합주실 찾기 </h2>
                   <button onClick={() => setIsSearchOpen(false)} className="text-sm font-bold text-gray-500 hover:text-gray-800 bg-gray-100 px-3 py-1.5 rounded-full transition-colors">
                      🗺️ 지도만 볼래요
                   </button>
@@ -626,7 +626,7 @@ function App() {
                         {loading ? (
                             <><span>{loadingPhrases[loadingIndex]}</span><span className="animate-spin">⏳</span></>
                         ) : (
-                            <><span>조건에 맞는 방 찾기</span><span>🚀</span></>
+                            <><span>조건에 맞는 방 찾기</span><span></span></>
                         )}
                     </button>
                 </div>
