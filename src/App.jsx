@@ -293,8 +293,12 @@ function App() {
                   },
                 ],
               });
+              // 🚨 [여기에 추가!] 성공 시 로딩 팝업을 '성공'으로 바꾸고 닫아버림
+              toast.success("준비 완료!", { id: toastId });
             } catch (uploadError) {
               console.error(uploadError);
+              // 에러 났을 때도 팝업을 에러로 바꿔줌
+              toast.error("카카오 업로드 실패!", { id: toastId });
             }
           }, "image/jpeg", 0.9);
         };
@@ -664,16 +668,27 @@ function App() {
                     </div>
                 )}
                 {rooms.map((room, index) => (
-                    <div key={index} className="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
+                    <div 
+                        key={index} 
+                        // 🚨 [추가 1] 박스 전체에 클릭 이벤트(지도 이동) 달기
+                        onClick={() => {
+                            setMapCenter([room.lat, room.lon]); // 📍 지도 중심 이동
+                            setActiveStudio(room.합주실);       // 🔴 마커 불 켜기 및 툴팁 띄우기
+                            // 📱 모바일 화면이면 바텀 시트를 35vh로 살짝 내려서 지도가 보이게 함
+                            if (window.innerWidth <= 640) setSheetHeight(35); 
+                        }}
+                        className="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-300 hover:shadow-md cursor-pointer transition-all"
+                    >
                         
-                        {/* 🌟 텍스트 영역이 왼쪽 공간만 차지하도록 방어 (flex-1 min-w-0 mr-3) */}
                         <div className="flex-1 min-w-0 mr-3">
                             <div className="flex items-center gap-2 mb-1">
-                                {/* 🌟 truncate를 넣어서 이름이 길면 '...'으로 잘리게 만듦 */}
                                 <h4 className="font-bold text-gray-900 truncate text-base">{room.합주실}</h4>
-                                {/* 🚀 [수정] 건조한 클립보드 복사 버튼을 버리고, 시선을 사로잡는 카카오 노란색 버튼 이식 */}
                                 <button 
-                                    onClick={() => shareKakao(room)}
+                                    onClick={(e) => {
+                                        // 🚨 [추가 2] 중요! '공유' 버튼 누를 땐 지도가 안 움직이게 막기 (이벤트 버블링 차단)
+                                        e.stopPropagation(); 
+                                        shareKakao(room);
+                                    }}
                                     className="flex items-center gap-1.5 bg-[#FEE500] text-[#3E2723] hover:bg-[#FDD835] text-[11px] font-extrabold px-2.5 py-1.5 rounded-lg transition-colors shrink-0 shadow-sm" 
                                     title="카톡으로 공유하기"
                                 >
@@ -685,8 +700,16 @@ function App() {
                             <p className="text-sm text-blue-600 font-bold">⏰ {room.예약가능시간}</p>
                         </div>
                         
-                        {/* 🌟 예약 버튼 절대 안 찌그러지게 고정 (shrink-0) */}
-                        <a href={room.예약링크} target="_blank" rel="noreferrer" className="bg-green-500 text-white px-4 py-2.5 rounded-lg font-bold text-sm shadow hover:bg-green-600 active:scale-95 transition-all shrink-0">예약</a>
+                        <a 
+                            href={room.예약링크} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            // 🚨 [추가 3] '예약' 버튼 누를 때도 지도 이동 방지
+                            onClick={(e) => e.stopPropagation()} 
+                            className="bg-green-500 text-white px-4 py-2.5 rounded-lg font-bold text-sm shadow hover:bg-green-600 active:scale-95 transition-all shrink-0"
+                        >
+                            예약
+                        </a>
                     </div>
                 ))}
             </div>
