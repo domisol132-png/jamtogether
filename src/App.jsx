@@ -214,27 +214,52 @@ function App() {
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
           // ==========================================
-          // 🎨 4. 티켓 위에 텍스트 인쇄하기 (최종 ticket-bg.jpg 맞춤 좌표)
+          // 🎨 4. 티켓 위에 텍스트 인쇄하기 (미니멀 & 정제된 데이터)
           // ==========================================
           
-          ctx.fillStyle = "#111111"; // 묵직한 먹색 텍스트
-          ctx.textAlign = "left"; // 좌측 정렬 
+          ctx.fillStyle = "#111111"; // 리얼 블랙
+          ctx.textAlign = "left"; 
+          ctx.textBaseline = "middle"; // 세로 중앙 정렬 (위치 잡기 수월함)
           
-          // 📍 Passenger: 네 기획대로 코드를 넣지 않고 빈칸으로 둔다.
-
-          // 📍 Place (합주실 이름 - 우측 상단 빈 공간을 지배하도록 거대하게!)
-          ctx.font = "46px 'Anton', sans-serif"; 
-          // x: 380 (대략 중앙 빈 공간 시작점), y: 150 (passenger 라인과 비슷한 높이)
-          ctx.fillText(room.합주실, 380, 150, 380); // 최대 너비 380px 제한
-
-          // 📍 Date (날짜 & 시간 포맷팅)
-          ctx.font = "24px 'Anton', sans-serif";
-          const dateObj = new Date(date);
-          const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-          const formattedDate = `${monthNames[dateObj.getMonth()]} ${String(dateObj.getDate()).padStart(2, '0')}, ${dateObj.getFullYear()}`;
+          // 📍 Place (합주실 이름)
+          // 영문은 Inter, 한글은 Pretendard가 자동 적용됨. 굵기는 900(Black)
+          ctx.font = "900 42px 'Inter', 'Pretendard', sans-serif"; 
+          ctx.letterSpacing = "-1px"; // 자간 살짝 축소해서 밀도감 업
           
-          // x: 440 ('date:' 라벨 텍스트 끝나는 지점 바로 옆), y: 260
-          ctx.fillText(`${formattedDate} | ${room.예약가능시간}`, 440, 260, 340); 
+          // ticket.jpg의 'place :' 글씨 우측 옆(X: 160)에 배치. 높이는 캔버스 중간쯤(Y: 230)
+          ctx.fillText(room.합주실, 160, 230, 600); 
+
+          // 📍 Date & Time (정제된 포맷팅 & 줄바꿈)
+          ctx.font = "600 28px 'Inter', 'Pretendard', sans-serif"; // 시간은 조금 더 얇게(600), 작게(28px)
+          ctx.letterSpacing = "0px";
+
+          // 1️⃣ 날짜 가공: "2026-03-17" -> "03/17"
+          const dateParts = date.split('-');
+          const cleanDate = `${dateParts[1]}/${dateParts[2]}`;
+
+          // 2️⃣ 시간 가공: "16시~19시, 21시~22시" -> ["16:00 - 19:00", "21:00 - 22:00"]
+          // "시"를 ":00"으로, "~"를 " - "로 일괄 변환 후 쉼표 기준으로 쪼개서 배열로 만듦
+          const rawTime = room.예약가능시간;
+          const cleanTimeSlots = rawTime
+            .replace(/시/g, ':00')
+            .replace(/~/g, ' - ')
+            .split(',')
+            .map(t => t.trim()); // 앞뒤 공백 제거
+
+          // 3️⃣ 줄바꿈 렌더링 로직
+          let startY = 350; // 'date :' 글씨 우측 옆 기준 높이
+          const lineHeight = 36; // 줄바꿈 간격
+
+          cleanTimeSlots.forEach((slot, idx) => {
+            if (idx === 0) {
+              // 첫 번째 줄: "03/17, 16:00 - 18:00" 출력
+              ctx.fillText(`${cleanDate}, ${slot}`, 140, startY);
+            } else {
+              // 두 번째 줄 이상: 날짜 글씨("03/17, ")가 차지하는 너비만큼 띄워서 시간만 출력
+              const offsetWidth = ctx.measureText(`${cleanDate}, `).width;
+              ctx.fillText(`${slot}`, 140 + offsetWidth, startY + (idx * lineHeight));
+            }
+          });
 
           // ==========================================
           
