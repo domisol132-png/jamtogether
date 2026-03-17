@@ -10,7 +10,7 @@ import { STUDIO_DB } from './data.js';
 const REGION_MAPPING = {
     "홍대입구역 근처": ["그라운드합주실 본점", "그라운드합주실 홍대1호점", "제시뮤직 합주실 홍대점", "하모닉스 합주실", "하모닉스 합주실 2호점", "사운드시티 합주실 홍대역점", "호랑이합주실"],
     "합정/망원 ": ["그라운드합주실 합정1호점", "사운드시티 합주실 합정 본점", "Chama Studio", "에비로드 합주실"],
-    "신촌/이대 ": ["그라운드합주실 신촌1호점"]
+    "신촌/이대 ": ["그라운드합주실 신촌1호점", "라디오가가 합주실 신촌점"]
 }
 
 // 🌟 [수정] 모바일 화면에서 튀어나가지 않는 반응형 TimeInput 컴포넌트
@@ -199,122 +199,105 @@ function App() {
     const toastId = toast.loading("준비 중입니다...");
 
     try {
-      // 2. 가상의 도화지(Canvas) 생성 (가로형 800x420 규격)
+      // 2. 가상의 도화지(Canvas) 생성
         const canvas = document.createElement("canvas");
         canvas.width = 800;  
-        canvas.height = 420; 
+        canvas.height = 500; // 👈 500으로 확정!
         const ctx = canvas.getContext("2d");
 
-        // 3. 네가 만든 빈 템플릿 이미지 불러오기
         const img = new Image();
-        img.src = "/ticket-bg.jpg"; // 새로 만든 템플릿 파일명 확인!
+        img.src = "/ticket.jpg"; // 네 파일명 맞는지 확인!
 
-        img.onload = () => {
-          // 도화지에 템플릿 배경 깔기
+        // 🚨 [수정 1] async 추가: 폰트가 다운로드될 때까지 기다리는 마법
+        img.onload = async () => {
+          
+          // 브라우저야, 폰트 다 불러올 때까지 여기서 멈추고 대기해!
+          await document.fonts.ready; 
+
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
           // ==========================================
-          // 🎨 4. 티켓 위에 텍스트 인쇄하기 (미니멀 & 정제된 데이터)
+          // 🎨 4. 티켓 위에 텍스트 인쇄하기
           // ==========================================
-          
-          ctx.fillStyle = "#111111"; // 리얼 블랙
+          ctx.fillStyle = "#111111"; 
           ctx.textAlign = "left"; 
-          ctx.textBaseline = "middle"; // 세로 중앙 정렬 (위치 잡기 수월함)
+          ctx.textBaseline = "middle"; 
           
-          // 📍 Place (합주실 이름)
-          // 영문은 Inter, 한글은 Pretendard가 자동 적용됨. 굵기는 900(Black)
+          // 📍 합주실 이름 (Pretendard 폰트 강제 적용)
           ctx.font = "900 42px 'Inter', 'Pretendard', sans-serif"; 
-          ctx.letterSpacing = "-1px"; // 자간 살짝 축소해서 밀도감 업
+          ctx.letterSpacing = "-1px"; 
           
-          // ticket.jpg의 'place :' 글씨 우측 옆(X: 160)에 배치. 높이는 캔버스 중간쯤(Y: 230)
-          ctx.fillText(room.합주실, 160, 230, 600); 
+          // place : 라벨 우측 (X: 140, Y: 270 부근 - 800x500 비율에 맞춤)
+          ctx.fillText(room.합주실, 140, 270, 600); 
 
-          // 📍 Date & Time (정제된 포맷팅 & 줄바꿈)
-          ctx.font = "600 28px 'Inter', 'Pretendard', sans-serif"; // 시간은 조금 더 얇게(600), 작게(28px)
+          // 📍 날짜 & 시간
+          ctx.font = "600 28px 'Inter', 'Pretendard', sans-serif"; 
           ctx.letterSpacing = "0px";
 
-          // 1️⃣ 날짜 가공: "2026-03-17" -> "03/17"
+          // 날짜 가공: "03/18" 포맷팅
           const dateParts = date.split('-');
           const cleanDate = `${dateParts[1]}/${dateParts[2]}`;
 
-          // 2️⃣ 시간 가공: "16시~19시, 21시~22시" -> ["16:00 - 19:00", "21:00 - 22:00"]
-          // "시"를 ":00"으로, "~"를 " - "로 일괄 변환 후 쉼표 기준으로 쪼개서 배열로 만듦
+          // 시간 가공 및 배열화
           const rawTime = room.예약가능시간;
           const cleanTimeSlots = rawTime
             .replace(/시/g, ':00')
             .replace(/~/g, ' - ')
             .split(',')
-            .map(t => t.trim()); // 앞뒤 공백 제거
+            .map(t => t.trim()); 
 
-          // 3️⃣ 줄바꿈 렌더링 로직
-          let startY = 350; // 'date :' 글씨 우측 옆 기준 높이
-          const lineHeight = 36; // 줄바꿈 간격
+          // date : 라벨 우측 줄바꿈 렌더링 (X: 140, Y: 400 부근)
+          let startY = 400; 
+          const lineHeight = 36; 
 
           cleanTimeSlots.forEach((slot, idx) => {
             if (idx === 0) {
-              // 첫 번째 줄: "03/17, 16:00 - 18:00" 출력
               ctx.fillText(`${cleanDate}, ${slot}`, 140, startY);
             } else {
-              // 두 번째 줄 이상: 날짜 글씨("03/17, ")가 차지하는 너비만큼 띄워서 시간만 출력
               const offsetWidth = ctx.measureText(`${cleanDate}, `).width;
               ctx.fillText(`${slot}`, 140 + offsetWidth, startY + (idx * lineHeight));
             }
           });
-
           // ==========================================
           
-          // ... [이후 canvas.toBlob 및 Kakao.Share 로직은 그대로 유지] ...
+          // 5. Blob 변환
+          canvas.toBlob(async (blob) => {
+            if (!blob) return;
+            const file = new File([blob], "jam_ticket.jpg", { type: "image/jpeg" });
 
-        // 5. 완성된 캔버스를 이미지 파일(Blob)로 변환
-        canvas.toBlob(async (blob) => {
-          // 🚨 [에러 추적 1] 변환된 파일이 텅 비어있는지 확인
-          if (!blob) {
-            toast.error("이미지 압축 실패! (템플릿 용량이 너무 크거나 보안 에러입니다)", { id: toastId });
-            return;
-          }
+            try {
+              const response = await window.Kakao.Share.uploadImage({ file: [file] });
+              const uploadedImageUrl = response.infos.original.url;
 
-          const file = new File([blob], "jam_ticket.jpg", { type: "image/jpeg" });
-
-          try {
-            // 6. 카카오 클라우드에 업로드
-            const response = await window.Kakao.Share.uploadImage({
-              file: [file]
-            });
-            const uploadedImageUrl = response.infos.original.url;
-
-            // 7. 카톡 메시지 발사! (이전 코드와 동일)
-            window.Kakao.Share.sendDefault({
-              objectType: 'feed',
-              content: {
-                 title: `🎸 ${room.합주실} `,
-                description: `⏰ 시간: ${room.예약가능시간}\n📅 날짜: ${date}\n⚡ 지금 예약하기.`,
-                imageWidth: 800,  // 👈 추가: 카카오야, 이 이미지는 가로가 800이다!
-                imageHeight: 420, // 👈 추가: 세로는 420이니까 자르지 말고 가로형으로 다 보여줘!
-                imageUrl: uploadedImageUrl, // 👈 다이내믹 티켓 URL 삽입!
-                link: {
-                  mobileWebUrl: room.예약링크,
-                  webUrl: room.예약링크,
-                },
-              },
-              buttons: [
-                {
-                  title: '예약 바로가기',
+              // 6. 진짜 카톡 메시지 발사!
+              window.Kakao.Share.sendDefault({
+                objectType: 'feed',
+                content: {
+                  title: `🎸 ${room.합주실} `,
+                  description: `⏰ 시간: ${room.예약가능시간}\n📅 날짜: ${date}\n⚡ 지금 예약하기.`,
+                  imageUrl: uploadedImageUrl, 
+                  imageWidth: 800,  // 🚨 [수정 2] 카카오한테 가로 800이라고 통보
+                  imageHeight: 500, // 🚨 [수정 3] 세로 500이라고 통보 (이래야 안 잘림!)
                   link: {
                     mobileWebUrl: room.예약링크,
                     webUrl: room.예약링크,
                   },
                 },
-              ],
-            });
-            
-            toast.success("업로드 완료!", { id: toastId });
-          } catch (uploadError) {
-            console.error(uploadError);
-            // 🚨 [에러 추적 2] 카카오가 구체적으로 뭐라고 화내는지 화면에 출력
-            toast.error(`카카오 에러: ${uploadError.message || "업로드 거부됨"}`, { id: toastId });
-          }
-        }, "image/jpeg", 0.9);
-      };
+                buttons: [
+                  {
+                    title: '예약 바로가기',
+                    link: {
+                      mobileWebUrl: room.예약링크,
+                      webUrl: room.예약링크,
+                    },
+                  },
+                ],
+              });
+            } catch (uploadError) {
+              console.error(uploadError);
+            }
+          }, "image/jpeg", 0.9);
+        };
 
       img.onerror = () => {
         toast.error("티켓 템플릿을 불러오지 못했습니다.", { id: toastId });
