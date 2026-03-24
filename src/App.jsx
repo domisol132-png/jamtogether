@@ -58,7 +58,7 @@ function App() {
     if (loadingRef.current && abortControllerRef.current) {
         abortControllerRef.current.abort(); // 허공에 날아가던 서버 요청의 목을 벤다!
         setLoading(false); // 로딩 스피너 즉시 끄기
-        setSearchError("🛑 조건이 변경되어 이전 검색이 취소되었습니다.");
+        setSearchError("조건이 변경되어 이전 검색이 중단되었습니다.");
     }
   }, [date, startTime, endTime, minHours, selectedStudios]); 
   // ==========================================
@@ -397,7 +397,7 @@ function App() {
     } catch (error) {
       // 🚀 [추가 4] 유저가 조건을 바꿔서 강제로 폭파(Abort)된 경우의 예외 처리
       if (error.name === 'AbortError') {
-          console.log("검색이 조건 변경으로 인해 자동 중단되었습니다.");
+          console.log("조건 변경으로 인해 검색이 중단되었습니다.");
           // 여기서 return 해버려서 밑에 있는 setLoading(false)나 "서버 통신 실패" 에러가 뜨는 걸 막음
           return; 
       }
