@@ -698,7 +698,7 @@ function App() {
                                 onClick={() => {
                                     setMapCenter([room.lat, room.lon]); 
                                     setActiveStudio(room.합주실);       
-                                    if (window.innerWidth <= 640) setSheetHeight(35); 
+                                  
                                 }}
                                 className="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-black hover:shadow-md cursor-pointer transition-all gap-4"
                             >
