@@ -43,7 +43,25 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(true) 
   const [started, setStarted] = useState(false);
+// ==========================================
+  // 🚀 [추가 1] 통신 폭파 제어기 & 로딩 그림자 요원
+  // ==========================================
+  const abortControllerRef = useRef(null);
+  const loadingRef = useRef(loading);
+  
+  // 로딩 상태가 바뀔 때마다 최신 상태를 몰래 기록해둠 (stale closure 방지)
+  useEffect(() => { loadingRef.current = loading; }, [loading]);
 
+  // 🔥 [핵심] 조건 변경 감지 트립와이어 (Tripwire)
+  useEffect(() => {
+    // 로딩 중(검색 중)인데, 날짜/시간/합주실 조건이 하나라도 바뀌었다면?
+    if (loadingRef.current && abortControllerRef.current) {
+        abortControllerRef.current.abort(); // 허공에 날아가던 서버 요청의 목을 벤다!
+        setLoading(false); // 로딩 스피너 즉시 끄기
+        setSearchError("🛑 조건이 변경되어 이전 검색이 취소되었습니다.");
+    }
+  }, [date, startTime, endTime, minHours, selectedStudios]); 
+  // ==========================================
   const sheetRef = useRef(null);
   const [activeStudio, setActiveStudio] = useState(null)
   // 🌟 [신규] FAQ 모달 상태
@@ -319,9 +337,11 @@ function App() {
     }
     setSearchError("")
     setLoading(true)
+
+    // 🚀 [추가 2] 새로운 통신을 시작할 때마다 새로운 제어기(리모컨)를 생성
+    abortControllerRef.current = new AbortController();
     
     try {
-      // 🌟 1. 프론트엔드의 사령탑 역할: 선택된 합주실 브랜드들의 '모든 룸(Room)' 데이터를 긁어모은다
       const targetRooms = [];
       selectedStudios.forEach(studioName => {
           if (STUDIO_DB[studioName]) {
@@ -329,47 +349,43 @@ function App() {
           }
       });
 
-      // 🌟 2. 백엔드에 GET 파라미터 대신, POST 방식으로 페이로드(명령서) 투척!
       const response = await fetch('https://jam-backend-yk57.onrender.com/search', {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
           },
+          // 🚀 [추가 3] fetch에 제어기 연결 (이제 언제든 폭파 가능)
+          signal: abortControllerRef.current.signal, 
           body: JSON.stringify({
               date: date,
               start_time: startTime,
               end_time: endTime,
               min_hours: minHours,
-              rooms: targetRooms // 👈 백엔드는 이제 이 보따리에 든 링크들만 무지성으로 스캔한다
+              rooms: targetRooms 
           })
       });
       
       if (!response.ok) throw new Error("서버 에러");
       const data = await response.json();
       
-      // 🚀 [추가] 백엔드에서 받은 데이터를 '정상'과 '실패'로 쪼갭니다.
       const validRooms = data.results.filter(room => room.예약가능시간 !== "확인 불가");
       const errorRooms = data.results.filter(room => room.예약가능시간 === "확인 불가");
       
-      // 실패한 합주실 이름만 중복 없이 추출
       const errorNames = [...new Set(errorRooms.map(r => r.합주실.split(" ")[0]))];
       setFailedStudios(errorNames);
 
-      // 😭 완벽하게 탐색했지만 진짜 빈 방이 없는 경우
       if (validRooms.length === 0 && errorRooms.length === 0) {
         setSearchError("😭 조건에 맞는 방이 없어요! 시간이나 날짜를 변경해보세요.")
         setLoading(false)
         return
       }
 
-      // ⚠️ 빈 방은 하나도 없는데, 서버가 터진 합주실만 있는 경우
       if (validRooms.length === 0 && errorRooms.length > 0) {
          setSearchError(`⚠️ 네이버 예약 서버 지연으로 ${errorNames.join(", ")}의 상태를 확인할 수 없습니다. 잠시 후 다시 시도해주세요.`);
          setLoading(false)
          return
       }
 
-      // ✅ 하나라도 빈 방을 찾은 경우
       setRooms(validRooms)
       setIsSearched(true)
       setIsSearchOpen(false) 
@@ -379,6 +395,12 @@ function App() {
         setMapCenter([validRooms[0].lat, validRooms[0].lon])
       }
     } catch (error) {
+      // 🚀 [추가 4] 유저가 조건을 바꿔서 강제로 폭파(Abort)된 경우의 예외 처리
+      if (error.name === 'AbortError') {
+          console.log("검색이 조건 변경으로 인해 자동 중단되었습니다.");
+          // 여기서 return 해버려서 밑에 있는 setLoading(false)나 "서버 통신 실패" 에러가 뜨는 걸 막음
+          return; 
+      }
       console.error(error);
       setSearchError("서버 통신 실패! 백엔드를 확인해주세요.")
     }
