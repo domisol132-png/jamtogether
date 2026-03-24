@@ -533,7 +533,7 @@ function App() {
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl">
                             <h3 className="font-bold text-gray-800 mb-1">Q. 잼투게더는 무엇인가요?</h3>
-                            <p className="text-sm text-gray-600 leading-relaxed">서울 내 합주실 예약 현황을 실시간으로 스캔하여 원하는 시간에 맞는 빈 방을 찾아주는 서비스입니다.</p>
+                            <p className="text-sm text-gray-600 leading-relaxed">서울 내 합주실 예약 현황을 스캔하여 원하는 시간에 맞는 빈 방을 찾아주는 서비스입니다.</p>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl">
                             <h3 className="font-bold text-gray-800 mb-1">Q. 건의사항 및 문의</h3>
@@ -743,23 +743,25 @@ const IntroScreen = ({ onStart, isReady }) => {
 
     // 컴포넌트 마운트 시 애니메이션 시퀀스 시작
     useEffect(() => {
-        const timer1 = setTimeout(() => setAnimateStage(1), 300);  // 0.3초 후 로고 & 카피
-        const timer2 = setTimeout(() => setAnimateStage(2), 1300); // 1.3초 후 버튼
+        const timer1 = setTimeout(() => setAnimateStage(1), 300);  // 0.3초 후 로고 & 카피 등장
+        const timer2 = setTimeout(() => setAnimateStage(2), 1300); // 1.3초 후 버튼 등장
         return () => { clearTimeout(timer1); clearTimeout(timer2); };
     }, []);
 
     return (
-        // 🍎 배경을 흰색(bg-white)으로 변경!
-        <div className="w-full h-full bg-white flex flex-col items-center justify-center p-10 font-['Pretendard']">
+        // 🍎 전체 여백 최적화: 모바일 가로 여백은 px-6으로 줄여서 공간 확보, sm 이상에서만 px-10 적용
+        <div className="w-full h-full bg-white flex flex-col items-center justify-center px-6 sm:px-10 py-10 font-['Pretendard']">
             
-            {/* 🍎 텍스트 영역: 피그마 시안처럼 좌측 정렬(items-start, text-left) 적용 */}
-            <div className={`flex flex-col items-start w-full max-w-xs mb-20 transition-all duration-1000 ${animateStage >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-                <h1 className="font-['Inter'] font-black text-6xl sm:text-7xl text-black tracking-tighter mb-8 leading-none">
+            {/* 🍎 텍스트 영역: 좌측 정렬 유지 (items-start, text-left) */}
+            <div className={`flex flex-col items-start w-full max-w-xs mb-16 sm:mb-20 transition-all duration-1000 ${animateStage >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+                
+                {/* 🚀 반응형 로고 크기: 모바일에서는 text-5xl로 줄여서 잘림 방지, sm 이상에서만 text-7xl로 렌더링! */}
+                <h1 className="font-['Inter'] font-black text-5xl sm:text-7xl text-black tracking-tighter mb-6 sm:mb-8 leading-none">
                     JAM<br />TOGETHER!
                 </h1>
                 
-                {/* 🍎 직관적이고 타격감 있는 한글 서브 카피! (굵기 극대화) */}
-                <p className="font-extrabold text-3xl text-gray-900 leading-snug tracking-tight">
+                {/* 🚀 반응형 한글 서브 카피: 모바일 text-2xl -> sm text-3xl */}
+                <p className="font-extrabold text-2xl sm:text-3xl text-gray-900 leading-snug tracking-tight">
                     1초만에<br />
                     합주실 예약하기
                 </p>
@@ -770,8 +772,8 @@ const IntroScreen = ({ onStart, isReady }) => {
                 <button 
                     onClick={onStart} 
                     disabled={!isReady}
-                    // 🍎 흰 배경에 맞게 버튼은 검은색(bg-black text-white)으로 반전!
-                    className={`bg-black text-white font-bold text-xl px-12 py-4 rounded-[40px] shadow-2xl transition-all flex items-center justify-center gap-3 w-64
+                    // 버튼 크기도 살짝 반응형으로 조절
+                    className={`bg-black text-white font-bold text-lg sm:text-xl px-10 sm:px-12 py-3.5 sm:py-4 rounded-[40px] shadow-2xl transition-all flex items-center justify-center gap-3 w-56 sm:w-64
                     ${isReady ? 'hover:bg-gray-800 active:scale-95' : 'opacity-80 cursor-wait'}`}
                 >
                     {!isReady ? (
