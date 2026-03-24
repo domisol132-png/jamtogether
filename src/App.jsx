@@ -663,48 +663,70 @@ function App() {
                             </p>
                         </div>
                     )}
-                    {rooms.map((room, index) => (
-                        <div 
-                            key={index} 
-                            // 🚀 [리스트 클릭 시 카메라 이동 기능 탑재]
-                            onClick={() => {
-                                setMapCenter([room.lat, room.lon]); 
-                                setActiveStudio(room.합주실);       
-                                if (window.innerWidth <= 640) setSheetHeight(35); 
-                            }}
-                            className="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-300 hover:shadow-md cursor-pointer transition-all"
-                        >
-                            <div className="flex-1 min-w-0 mr-3">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <h4 className="font-bold text-gray-900 truncate text-base">{room.합주실}</h4>
+                    {rooms.map((room, index) => {
+                        // 1. 타임 칩을 위한 데이터 가공 (16시~18시 -> 16:00 - 18:00)
+                        const timeSlots = room.예약가능시간 !== "확인 불가" 
+                            ? room.예약가능시간.split(',').map(t => t.trim().replace(/시/g, ':00').replace(/~/g, ' - '))
+                            : ["확인 불가"];
+
+                        return (
+                            <div 
+                                key={index} 
+                                onClick={() => {
+                                    setMapCenter([room.lat, room.lon]); 
+                                    setActiveStudio(room.합주실);       
+                                    if (window.innerWidth <= 640) setSheetHeight(35); 
+                                }}
+                                className="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-black hover:shadow-md cursor-pointer transition-all gap-4"
+                            >
+                                {/* 🍎 좌측: 정보 구역 (방 이름 + 타임 칩) */}
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="font-extrabold text-gray-900 truncate text-base mb-2">{room.합주실}</h4>
+                                    
+                                    {/* 🚀 타임 칩(Time Chip) 렌더링 */}
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {timeSlots.map((slot, i) => (
+                                            <span 
+                                                key={i} 
+                                                className={`text-xs font-bold px-2.5 py-1 rounded-md shadow-sm border ${
+                                                    slot === "확인 불가" 
+                                                    ? "bg-red-50 text-red-600 border-red-100" 
+                                                    : "bg-white text-gray-800 border-gray-200"
+                                                }`}
+                                            >
+                                                {slot}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                                
+                                {/* 🍎 우측: 통제 구역 (공유 + 예약 버튼 클러스터) */}
+                                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 shrink-0">
                                     <button 
                                         onClick={(e) => {
-                                            // 🚀 [공유 버튼 클릭 시 지도 이동 막기]
                                             e.stopPropagation(); 
                                             shareKakao(room);
                                         }}
-                                        className="flex items-center gap-1.5 bg-[#FEE500] text-[#3E2723] hover:bg-[#FDD835] text-[11px] font-extrabold px-2.5 py-1.5 rounded-lg transition-colors shrink-0 shadow-sm" 
+                                        className="flex items-center justify-center gap-1 bg-[#FEE500] text-[#3E2723] hover:bg-[#FDD835] text-[11px] font-extrabold w-[68px] h-[34px] rounded-lg transition-colors shadow-sm" 
                                         title="카톡으로 공유하기"
                                     >
                                         <svg viewBox="0 0 32 32" className="w-3.5 h-3.5 fill-current"><path d="M16 4.64c-6.96 0-12.64 4.48-12.64 10.08 0 3.52 2.32 6.64 5.76 8.48l-1.44 5.44c-0.08 0.4 0.32 0.64 0.64 0.48l6.16-4.08c0.48 0.08 0.96 0.08 1.52 0.08 6.96 0 12.64-4.48 12.64-10.08 0-5.6-5.68-10.08-12.64-10.08z"/></svg>
                                         공유
                                     </button>
+                                    
+                                    <a 
+                                        href={room.예약링크} 
+                                        target="_blank" 
+                                        rel="noreferrer" 
+                                        onClick={(e) => e.stopPropagation()} 
+                                        className="bg-black text-white hover:bg-gray-800 text-sm font-bold flex items-center justify-center w-[68px] h-[34px] rounded-lg shadow-sm transition-all"
+                                    >
+                                        예약
+                                    </a>
                                 </div>
-                                <p className="text-sm text-blue-600 font-bold">⏰ {room.예약가능시간}</p>
                             </div>
-                            
-                            <a 
-                                href={room.예약링크} 
-                                target="_blank" 
-                                rel="noreferrer" 
-                                // 🚀 [예약 버튼 클릭 시 지도 이동 막기]
-                                onClick={(e) => e.stopPropagation()} 
-                                className="bg-green-500 text-white px-4 py-2.5 rounded-lg font-bold text-sm shadow hover:bg-green-600 active:scale-95 transition-all shrink-0"
-                            >
-                                예약
-                            </a>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
           )}
