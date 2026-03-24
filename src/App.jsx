@@ -43,25 +43,7 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(true) 
   const [started, setStarted] = useState(false);
-// ==========================================
-  // 🚀 [추가 1] 통신 폭파 제어기 & 로딩 그림자 요원
-  // ==========================================
-  const abortControllerRef = useRef(null);
-  const loadingRef = useRef(loading);
-  
-  // 로딩 상태가 바뀔 때마다 최신 상태를 몰래 기록해둠 (stale closure 방지)
-  useEffect(() => { loadingRef.current = loading; }, [loading]);
 
-  // 🔥 [핵심] 조건 변경 감지 트립와이어 (Tripwire)
-  useEffect(() => {
-    // 로딩 중(검색 중)인데, 날짜/시간/합주실 조건이 하나라도 바뀌었다면?
-    if (loadingRef.current && abortControllerRef.current) {
-        abortControllerRef.current.abort(); // 허공에 날아가던 서버 요청의 목을 벤다!
-        setLoading(false); // 로딩 스피너 즉시 끄기
-        setSearchError("조건이 변경되어 이전 검색이 중단되었습니다.");
-    }
-  }, [date, startTime, endTime, minHours, selectedStudios]); 
-  // ==========================================
   const sheetRef = useRef(null);
   const [activeStudio, setActiveStudio] = useState(null)
   // 🌟 [신규] FAQ 모달 상태
@@ -85,6 +67,25 @@ function App() {
   const [searchError, setSearchError] = useState("")
   const [sheetHeight, setSheetHeight] = useState(35);
   const [failedStudios, setFailedStudios] = useState([]); // 🌟 [추가] 에러 난 합주실 보관소
+  // ==========================================
+  // 🚀 [추가 1] 통신 폭파 제어기 & 로딩 그림자 요원
+  // ==========================================
+  const abortControllerRef = useRef(null);
+  const loadingRef = useRef(loading);
+  
+  // 로딩 상태가 바뀔 때마다 최신 상태를 몰래 기록해둠 (stale closure 방지)
+  useEffect(() => { loadingRef.current = loading; }, [loading]);
+
+  // 🔥 [핵심] 조건 변경 감지 트립와이어 (Tripwire)
+  useEffect(() => {
+    // 로딩 중(검색 중)인데, 날짜/시간/합주실 조건이 하나라도 바뀌었다면?
+    if (loadingRef.current && abortControllerRef.current) {
+        abortControllerRef.current.abort(); // 허공에 날아가던 서버 요청의 목을 벤다!
+        setLoading(false); // 로딩 스피너 즉시 끄기
+        setSearchError("조건이 변경되어 이전 검색이 중단되었습니다.");
+    }
+  }, [date, startTime, endTime, minHours, selectedStudios]); 
+  // ==========================================
   // 🌟 [추가] 록스타 로딩 문구 리스트 & 현재 인덱스
   const loadingPhrases = [
     "탐색 중...",
